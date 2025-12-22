@@ -67,6 +67,7 @@ void uart_transmit_init()
 
 void uart_write(char b)
 {
+	char *dr = (char*)(void*)(&UART->DR);
 	while (uart_flags_busy(1));
-	UART->DR |= b;
+	*dr = b;
 }
