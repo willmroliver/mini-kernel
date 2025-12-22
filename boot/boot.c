@@ -5,20 +5,15 @@
 
 extern void _boot_main()
 {
-	uart_baud_init(QEMU_CLK_HZ, BAUD_RATE);
-	uart_transmit_init();
-
-	char *word = "Hello, World!\n";
+	char *word = "Hello, World!\n", buf[1024];
 	int i = 0;
+	char c;
 
-	while (1) {
-		uart_write(word[i]);
+	uart_baud_init(QEMU_CLK_HZ, BAUD_RATE);
+	uart_init(1);
 
-		if (word[i] == '\n')
-			break;
-
-		++i;
-	}
+	while (1)
+		uart_write(uart_read());
 
 	for (;;);
 }
