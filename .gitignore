@@ -1,3 +1,4 @@
 .asm-lsp.toml
 .cache
 build
+debug
