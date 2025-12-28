@@ -18,15 +18,13 @@ SECTIONS
   .boot ALIGN(0x1000) : AT(LOAD_ADDRESS) {
     _sboot = . ;
     *(.boot*) ;
+    . = ALIGN(0x10) ;
+    _boot_stack_end = . ;
+    . = . + 0x100 ;
+    _boot_stack_top = . ;
     . = ALIGN(0x1000) ;
     _eboot = . ;
   } :boot
-
-  .boot_stack (NOLOAD) : {
-    _boot_stack_end = . ;
-    . = . + 0x4000 ;
-    _boot_stack_top = . ;
-  } :NONE
 
   .tables (NOLOAD) : {
     . = ALIGN(0x1000) ; 
@@ -39,7 +37,7 @@ SECTIONS
   _skernel = . ;
   _skernel_pa = LOADADDR(.text) ;
 
-  .text ALIGN(0x1000) : AT(ADDR(.boot) + SIZEOF(.boot)) {
+  .text ALIGN(0x1000) : AT(ALIGN(ADDR(.boot) + SIZEOF(.boot), 2M)) {
     _stext = . ;
     *(.text*) ;
     _etext = . ;
@@ -63,5 +61,21 @@ SECTIONS
     _ebss = . ;
   } :data
 
-  _end = . ; 
+  . = ALIGN(0x1000);
+
+  .stack (NOLOAD) : {
+    _estack = . ;
+    . = . + 0x4000 ;
+    _sstack = . ;
+  } :NONE
+
+  .heap (NOLOAD) : {
+    _sheap = . ;
+    . = . + 1M ;
+    _eheap = . ;
+  }
+
+  . = ALIGN(2M) ;
+
+  _end = . ;
 }
