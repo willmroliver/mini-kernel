@@ -1,6 +1,8 @@
 #ifndef INC_UART_H
 #define INC_UART_H
 
+#define DEFAULT_BAUD_RATE 230400
+
 typedef struct {
 	volatile unsigned int DR;	       // 0x0 
 	volatile unsigned int RSR_ECR;	       // 0x4

@@ -11,4 +11,6 @@ target_link_options(${BOOT_EXEC}
     -Wl,-defsym,LOAD_ADDRESS=${LOAD_ADDRESS}
 )
 
-target_link_libraries(${BOOT_EXEC} PRIVATE ${DRIVERS_LIB})
+target_link_libraries(${BOOT_EXEC} 
+  PRIVATE ${CORE_LIB} ${DRIVERS_LIB}
+)

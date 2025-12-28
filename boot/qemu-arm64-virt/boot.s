@@ -12,13 +12,15 @@ _boot_start:
 	ldr x1, =_pt_end
 	bl _zero_64
 
-	bl _init_mmu
+	bl _init_mmu    // minimum to jump to kernel VA -
+			// one page for kernel, one for boot
 
 	mrs x0, SCTLR_EL1
 	orr x0, x0, #1
 	msr SCTLR_EL1, x0 
 	isb
 
+.jump:
 	ldr x16, =_boot_main
 	br x16
 

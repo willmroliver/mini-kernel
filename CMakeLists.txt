@@ -21,11 +21,21 @@ set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -std=c++17")
 set(CMAKE_C_FLAGS "${COMMON_FLAGS} -std=gnu99")
 set(CMAKE_ASM_FLAGS "${COMMON_FLAGS}")
 
+if(NOT DEFINED ARCH)
+  set(ARCH arm64)
+endif()
+
+set(CORE_LIB core)
+add_subdirectory(${CORE_LIB})
+add_subdirectory(arch)
+target_include_directories(${CORE_LIB} PUBLIC inc)
+
 set(DRIVERS_LIB drivers)
 add_subdirectory(${DRIVERS_LIB})
 
 function(add_machine MACHINE)
   set(BOOT_EXEC boot_${MACHINE})
+  add_subdirectory(lib)
   add_subdirectory(boot)
 endfunction()
 
