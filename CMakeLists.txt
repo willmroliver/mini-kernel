@@ -26,12 +26,11 @@ if(NOT DEFINED ARCH)
 endif()
 
 set(CORE_LIB core)
-add_subdirectory(${CORE_LIB})
+add_library(${CORE_LIB})
+add_subdirectory(core)
 add_subdirectory(arch)
-target_include_directories(${CORE_LIB} PUBLIC inc)
-
-set(DRIVERS_LIB drivers)
-add_subdirectory(${DRIVERS_LIB})
+add_subdirectory(mem)
+add_subdirectory(drivers)
 
 function(add_machine MACHINE)
   set(BOOT_EXEC boot_${MACHINE})

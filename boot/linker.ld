@@ -77,5 +77,11 @@ SECTIONS
 
   . = ALIGN(2M) ;
 
+  .dtb (NOLOAD) : {
+    _sdtb = . ;
+    . = . + 2M;
+    _edtb = . ;
+  }
+
   _end = . ;
 }

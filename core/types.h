@@ -14,9 +14,7 @@ typedef arch_i32 i32;
 typedef arch_i64 i64;
 
 typedef arch_size_t size_t;
-typedef arch_ssize_t ssize_t;
 typedef arch_ptr_t ptr_t;
-typedef arch_sptr_t sptr_t;
 typedef arch_paddr_t paddr_t;
 typedef arch_vaddr_t vaddr_t;
 typedef arch_off_t off_t;

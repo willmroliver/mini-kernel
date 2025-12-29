@@ -1,17 +1,13 @@
-add_library(devicetree STATIC)
-
-target_sources(devicetree 
+target_sources(${CORE_LIB} 
   PUBLIC FILE_SET HEADERS
-    BASE_DIRS ${CMAKE_SOURCE_DIR}/lib
+    BASE_DIRS ${CMAKE_SOURCE_DIR}
     FILES 
-      fdt.h
+      dt.h
   PRIVATE
     fdt.c
 )
 
-target_include_directories(devicetree
+target_include_directories(${CORE_LIB}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
-target_link_libraries(devicetree ${CORE_LIB})
 

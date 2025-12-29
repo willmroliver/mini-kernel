@@ -5,6 +5,10 @@
 .global _boot_main
 
 _boot_start:
+	// @TODO - DTB doesn't seem to be passed to x0, so where is it?
+
+	mov x25, x0 // DTB PA
+
 	ldr x0, =_boot_stack_top
 	mov sp, x0
 
@@ -22,6 +26,7 @@ _boot_start:
 .jump:
 	ldr x19, =_sstack
 	mov sp, x19
+
 	ldr x16, =_boot_main
 	br x16
 
@@ -57,6 +62,17 @@ _init_mmu:
 	msr TTBR0_EL1, x1         // boot page-tables
 	mov x19, #0x3             // base_table + 3 stages
 	mov x3, xzr               // stage counter
+	b .stage
+.dtb_va:
+	mov x21, #0x2		  // .boot_va & .dtb_va hit
+
+	ldr x2, =_sdtb	          // reserved VA for dtb
+	ldr x10, =0x401           // D_Block | Valid
+	orr x22, x25, x10	  // DTB PA | Lower Attributes
+	mrs x1, TTBR1_EL1	  // kernel address space
+	
+	mov x19, #0x2		  // base_table + 2 stages
+	mov x3, xzr
 .stage: 
 	and x0, x1, #-0x1000      // Last PTE becomes next table base 
 	cmp x3, x19               // are we at the target stage?
@@ -81,6 +97,8 @@ _init_mmu:
 	cmp x3, x19
 	bls .stage
 	cbz x21, .boot_va
+	cmp x21, #0x2
+	bne .dtb_va
 
 	ret
 

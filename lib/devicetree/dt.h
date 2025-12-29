@@ -3,11 +3,13 @@
 
 #include <core/types.h>
 
-static const u32 FDT_BEGIN_NODE = 0x01000000; // beginning of a ndoe
-static const u32 FDT_END_NODE   = 0x02000000; // end of a nide
-static const u32 FDT_PROP       = 0x03000000; // next token is a property
-static const u32 FDT_NOP        = 0x04000000; // all NOP values can be ignored
-static const u32 FDT_END        = 0x09000000; // end of the structure block
+static const u32 FDT_HEADER_MAGIC = 0xd00dfeed; 
+
+static const u32 FDT_BEGIN_NODE = 0x00000001; // beginning of a ndoe
+static const u32 FDT_END_NODE   = 0x00000002; // end of a nide
+static const u32 FDT_PROP       = 0x00000003; // next token is a property
+static const u32 FDT_NOP        = 0x00000004; // all NOP values can be ignored
+static const u32 FDT_END        = 0x00000009; // end of the structure block
 
 struct fdt_header {
 	u32 magic;              // should always be 0xd00dfeed
@@ -44,5 +46,15 @@ struct fdt_node {
 	struct fdt_prop_desc *props;
 	struct fdt_node *subnodes;
 };
+
+/**
+ * Parses a flattened device tree, returning the result as a 
+ * tree of structs.
+ *
+ * Can optionally pass in a header struct to retrieve metadata.
+ */
+struct fdt_node *fdt_parse(void *data, struct fdt_header* header);
+
+void fdt_destroy(struct fdt_node* fdt);
 
 #endif
