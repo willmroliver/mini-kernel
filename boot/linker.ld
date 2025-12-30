@@ -13,14 +13,17 @@ ENTRY(_sboot)
 SECTIONS
 {
   . = LOAD_ADDRESS ;
+
   _ram_start = . ;
 
-  .boot ALIGN(0x1000) : AT(LOAD_ADDRESS) {
+  . += LOAD_OFFSET;
+
+  .boot : AT(LOAD_ADDRESS + LOAD_OFFSET) {
     _sboot = . ;
     *(.boot*) ;
     . = ALIGN(0x10) ;
     _boot_stack_end = . ;
-    . = . + 0x100 ;
+    . += 0x100 ;
     _boot_stack_top = . ;
     . = ALIGN(0x1000) ;
     _eboot = . ;
@@ -32,6 +35,8 @@ SECTIONS
     . += 0x10000 ;
     _pt_end = . ;
   } :NONE
+
+  . = ALIGN(2M) ;
 
   . = KERNEL_VMA ;
   _skernel = . ;
@@ -66,7 +71,7 @@ SECTIONS
   .stack (NOLOAD) : {
     _estack = . ;
     . = . + 0x4000 ;
-    _sstack = . ;
+    _sstack = . - 0x10;
   } :NONE
 
   .heap (NOLOAD) : {
@@ -76,12 +81,6 @@ SECTIONS
   }
 
   . = ALIGN(2M) ;
-
-  .dtb (NOLOAD) : {
-    _sdtb = . ;
-    . = . + 2M;
-    _edtb = . ;
-  }
 
   _end = . ;
 }

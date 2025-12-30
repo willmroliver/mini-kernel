@@ -5,10 +5,6 @@
 .global _boot_main
 
 _boot_start:
-	// @TODO - DTB doesn't seem to be passed to x0, so where is it?
-
-	mov x25, x0 // DTB PA
-
 	ldr x0, =_boot_stack_top
 	mov sp, x0
 
@@ -27,11 +23,11 @@ _boot_start:
 	ldr x19, =_sstack
 	mov sp, x19
 
+	ldr x0, =_ram_start
 	ldr x16, =_boot_main
 	br x16
 
 _init_mmu:
-	ldr x20, =0x1000          // granule size (4KB)
 	mov x21, xzr              // set to 1 when .boot_va hit
 
 	ldr x19, =0x80100010      // 48-bit address spaces, 4KB granules
@@ -45,53 +41,55 @@ _init_mmu:
 	orr x22, x22, x10         // PA | Lower Attributes
 	ldr x2, =_skernel         // VA to map from
 
-	ldr x1, =_pt_start        // table base
-	msr TTBR1_EL1, x1         // kernel page-tables 
+	ldr x0, =_pt_start        // table base
+	msr TTBR1_EL1, x0         // kernel page-tables 
+	add x1, x0, #0x1000	  // next PTE Addr
 
 	mov x19, #0x2             // base_table + 2 stages
 	mov x3, xzr               // stage counter
 	b .stage
 .boot_va:
 	mov x21, #1               // .boot_va hit
+	mov x0, x1		  // next free space for table_base
+	add x1, x0, #0x1000	  // next PTE Addr
 
-	ldr x2, =_ram_start       // 1-1 PA to VA mapping
+	ldr x2, =_sboot		  // 1-1 PA to VA mapping
 	ldr x10, =0x403           // D_Page | Valid, nG = 0 (no ASID), AF = 1
 	orr x22, x2, x10          // PA | Lower Attributes
-	add x1, x0, x20           // next base 
 
-	msr TTBR0_EL1, x1         // boot page-tables
+	msr TTBR0_EL1, x0         // boot page-tables
 	mov x19, #0x3             // base_table + 3 stages
 	mov x3, xzr               // stage counter
 	b .stage
 .dtb_va:
 	mov x21, #0x2		  // .boot_va & .dtb_va hit
 
-	ldr x2, =_sdtb	          // reserved VA for dtb
+	ldr x2, =_ram_start	  // dtb placed at strt of RAM by qemu virt board
+	mov x3, x2		  // VA = PA
 	ldr x10, =0x401           // D_Block | Valid
-	orr x22, x25, x10	  // DTB PA | Lower Attributes
-	mrs x1, TTBR1_EL1	  // kernel address space
+	orr x22, x3, x10	  // DTB PA | Lower Attributes
+	mrs x0, TTBR0_EL1	  // kernel address space
 	
 	mov x19, #0x2		  // base_table + 2 stages
 	mov x3, xzr
 .stage: 
-	and x0, x1, #-0x1000      // Last PTE becomes next table base 
 	cmp x3, x19               // are we at the target stage?
 	bne .table
 .page:
 	mov x1, x22               // Load PTE configured above
+	mov x4, xzr
 	b .insert
 .table:
-	add x1, x1, x20           // PTE = Next table base
 	ldr x10, =0x403           // D_Table | Valid
 	orr x1, x1, x10           // | Attributes
+	mov x4, #1
 .insert:
-	stp x0, x1, [sp, #-0x10]!
-	stp x2, x3, [sp, #-0x10]! 
-	stp x4, lr, [sp, #-0x10]!
+	str x2, [sp, #-0x10]! 
+	stp x3, lr, [sp, #-0x10]!
 	bl _insert_pte
-	ldp x4, lr, [sp], #0x10
-	ldp x2, x3, [sp], #0x10
-	ldp x0, x1, [sp], #0x10
+	// x0 = next table to lookup, x1 = next free loc for new table_base
+	ldp x3, lr, [sp], #0x10
+	ldr x2, [sp], #0x10
 
 	add x3, x3, #1
 	cmp x3, x19
@@ -102,20 +100,31 @@ _init_mmu:
 
 	ret
 
-// x0 = table base, x1 = PTE, x2 = VA, x3 = stage 
+// x0 = table_base, x1 = PTE, x2 = VA, x3 = stage, x4 = is_table
+// returns: x0 = next table to lookup, x1 = next free space for new table
 _insert_pte:
-	ldr x4, =0x1ff   // 9-bit mask
+	ldr x7, =0x1ff       // 9-bit mask
 	mov x6, #0x3 
-	sub x3, x6, x3   // 3 - stage
+	sub x3, x6, x3       // 3 - stage
 	mov x5, #0x9
-	mul x3, x3, x5   // shift to get table offset
-	add x3, x3, #0xc // last 12 bits = offset into page
+	mul x3, x3, x5       // shift to get table offset
+	add x3, x3, #0xc     // last 12 bits = offset into page
 	lsr x2, x2, x3
-	and x2, x2, x4   // table rows	
-	mov x4, #0x8
-	mul x2, x2, x4   // table rows * entry width = offset
+	and x2, x2, x7       // table rows	
+	mov x7, #0x8
+	mul x2, x2, x7       // table rows * entry width = offset
 
+	ldr x5, [x0, x2]     // test if existing entry
+	cbz x5, .insert_new
+	and x0, x5, #-0x1000 // return existing table_base
+	and x1, x1, #-0x1000 // x1 holds next free table_base loc
+	ret
+.insert_new:
 	str x1, [x0, x2]
+	cbz x4, .inc_base
+	and x0, x1, #-0x1000 // return table_base addr just created
+.inc_base:
+	add x1, x0, #0x1000  // increment to get next free loc
 	ret
 
 // x0 = from_addr, x1 = to_addr (8-byte aligned) 

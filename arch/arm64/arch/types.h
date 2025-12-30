@@ -12,11 +12,9 @@ typedef signed int arch_i32;
 typedef signed long arch_i64;
 
 typedef unsigned long arch_size_t;
-typedef signed long arch_ssize_t;
 typedef unsigned long arch_ptr_t;
-typedef signed long arch_sptr_t;
 typedef unsigned long arch_paddr_t;
-typedef signed long arch_vaddr_t;
+typedef unsigned long arch_vaddr_t;
 typedef unsigned long arch_off_t;
 
 #endif

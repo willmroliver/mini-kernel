@@ -16,7 +16,7 @@ set(CMAKE_RANLIB aarch64-none-elf-ranlib)
 set(CMAKE_OBJCOPY aarch64-none-elf-objcopy) 
 set(CMAKE_OBJDUMP aarch64-none-elf-objdump) 
 
-set(COMMON_FLAGS "-march=armv8-a -ffreestanding -nostdlib -fno-exceptions")
+set(COMMON_FLAGS "-march=armv8-a -ffreestanding -nostdlib -fno-exceptions -mgeneral-regs-only")
 set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -std=c++17")
 set(CMAKE_C_FLAGS "${COMMON_FLAGS} -std=gnu99")
 set(CMAKE_ASM_FLAGS "${COMMON_FLAGS}")
