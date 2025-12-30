@@ -1,5 +1,3 @@
-.arch armv8-a
-
 .text
 
 .global arch_reverse_endian_u64
