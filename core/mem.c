@@ -1,12 +1,18 @@
 #include "mem.h"
-#include <mem/mem.h>
 
-void *kalloc(size_t size)
+static struct mem_ix *__mem_global;
+
+void *kmalloc(size_t size)
 {
-	return _mem_heap_alloc(size);	
+	return __mem_alloc(__mem_global, size);
 }
 
 void kfree(void *data)
 {
-	_mem_heap_free(data);
+	return __mem_free(__mem_global, data);
+}
+
+void __mem_global_set(struct mem_ix *mem)
+{
+	__mem_global = mem;
 }

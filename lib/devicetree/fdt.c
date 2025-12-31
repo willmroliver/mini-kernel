@@ -8,7 +8,7 @@ struct fdt_node *fdt_parse(void *data, struct fdt_header *header)
 	u32 *header_u32;
 
 	if (header == 0)
-		header = kalloc(size);
+		header = kmalloc(size);
 	
 	*header = *(struct fdt_header *)(data);
 	header_u32 = (u32*)(void*)(header);

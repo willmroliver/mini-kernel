@@ -5,7 +5,6 @@ target_sources(${CORE_LIB}
       mem.h
   PRIVATE 
     bump.c
-    heap.c
 )
 
 target_include_directories(${CORE_LIB}

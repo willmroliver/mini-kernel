@@ -1,26 +1,21 @@
-#include "heap_internal.h"
 #include "mem.h"
 
-struct {
-	size_t at;
-} _bump = {
-	.at = 0,
-};
-
-static void *_mem_bump_alloc(struct heap *h, size_t size)
+static inline void *mem_bump_alloc(void *mem, size_t size)
 {
-	void *data = (void *)(h->addr + _bump.at);
-	_bump.at += size;
+	struct mem_bump *b = mem;
+	void *data = (void *)b->addr;
+	b->addr += size;
 	return data;
 }
 
-static void _mem_bump_free(struct heap *h, void *data)
+static inline void mem_bump_free(void *mem, void *data)
 {
 	// do nothing - it's a bump allocator!
 }
 
-void _mem_bump_alloc_init(vaddr_t addr, size_t size)
+void mem_bump_init(struct mem_bump *mem, vaddr_t addr)
 {
-	_mem_set_heap(addr, size);
-	_mem_set_heap_fns(_mem_bump_alloc, _mem_bump_free);
+	mem->ix.alloc = mem_bump_alloc;
+	mem->ix.free = mem_bump_free;
+	mem->addr = addr;
 }
