@@ -2,8 +2,6 @@
 
 .section .boot, "ax"
 
-.global _boot_main
-
 _boot_start:
 	ldr x0, =_boot_stack_top
 	mov sp, x0
@@ -24,7 +22,7 @@ _boot_start:
 	mov sp, x19
 
 	ldr x0, =_ram_start
-	ldr x16, =_boot_main
+	ldr x16, =__boot_main
 	br x16
 
 _init_mmu:

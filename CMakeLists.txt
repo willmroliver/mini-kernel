@@ -36,6 +36,7 @@ endif()
 set(CORE_LIB core)
 add_library(${CORE_LIB})
 add_subdirectory(core)
+add_subdirectory(sys)
 add_subdirectory(mem)
 add_subdirectory(drivers)
 
