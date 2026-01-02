@@ -6,7 +6,6 @@ target_sources(${CORE_LIB}
       mem.h
       types.h 
   PRIVATE 
-    endian.c
     mem.c
 )
 

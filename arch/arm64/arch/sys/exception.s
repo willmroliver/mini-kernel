@@ -1,25 +1,22 @@
-.arch armv8-a
-
-.include "armv8a/macros.s"
+.include "arch/sys/frame.s"
 
 .text
 
-.global arch_init_exception_handlers
+.global __arch_init_exception_handlers
 
-arch_init_exception_handlers:
+__arch_init_exception_handlers:
 	ldr x1, =_svtable
 	msr VBAR_EL1, x1
 	ret
 
 __sync_elx:
-	PUSH_REGS 1
+	SYS_FRAME_PUSH 1
 
-	mov x0, sp
-	bl arch_sync_exception_handler
+	bl arch_sys_frame_init
+	bl __kernel_sync_handler
 
-	POP_REGS 1
+	SYS_FRAME_POP 1
 	eret
-	
 
 __stub_except:
 	// @TODO

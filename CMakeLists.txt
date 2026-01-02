@@ -23,14 +23,10 @@ set(CMAKE_ASM_FLAGS "${COMMON_FLAGS}")
 
 if(NOT DEFINED ARCH)
   set(ARCH arm64)
-  
-  if(NOT DEFINED ARM_VERSION_PROFILE)
-    set(ARM_VERSION_PROFILE armv8a)
-  endif()
+endif()
 
-  if(NOT DEFINED ARM_PLATFORM)
-    set(ARM_PLATFORM qemu-virt)
-  endif()
+if(NOT DEFINED TARGET_PLATFORM)
+  set(TARGET_PLATFORM qemu-virt)
 endif()
 
 set(CORE_LIB core)
@@ -40,16 +36,16 @@ add_subdirectory(sys)
 add_subdirectory(mem)
 add_subdirectory(drivers)
 
-function(add_platform _ARC _PLAT)
+function(add_platform _ARCH _PLAT)
   set(KERNEL_EXEC kernel)
   add_executable(${KERNEL_EXEC})
   set_target_properties(${KERNEL_EXEC} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY
-      ${CMAKE_BINARY_DIR}/${_ARC}/${_PLAT}
+      ${CMAKE_BINARY_DIR}/${_ARCH}/${_PLAT}
   )
 
   add_subdirectory(arch)
   add_subdirectory(lib)
 endfunction()
 
-add_platform(${ARCH} ${ARM_PLATFORM})
+add_platform(${ARCH} ${TARGET_PLATFORM})

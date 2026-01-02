@@ -1,7 +1,7 @@
 #ifndef INC_CORE_TYPES_H
 #define INC_CORE_TYPES_H
 
-#include <arch/types.h>
+#include <arch/core/types.h>
 
 typedef arch_u8 u8;
 typedef arch_u16 u16;

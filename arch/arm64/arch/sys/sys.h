@@ -3,7 +3,7 @@
 
 #include <core/types.h>
 
-extern void arch_init_exception_handlers(vaddr_t *syscall_jump_table);
+extern void __arch_init_exception_handlers(vaddr_t *syscall_jump_table);
 
 #endif
 

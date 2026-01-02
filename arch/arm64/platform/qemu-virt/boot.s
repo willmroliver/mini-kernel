@@ -1,5 +1,3 @@
-.arch armv8-a
-
 .section .boot, "ax"
 
 _boot_start:
