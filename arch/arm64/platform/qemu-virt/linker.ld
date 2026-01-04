@@ -15,7 +15,11 @@ SECTIONS
 {
   . = LOAD_ADDRESS ;
 
-  _ram_start = . ;
+  .dtb (NOLOAD) : AT(LOAD_ADDRESS) {
+    _sdtb = . ;
+    . += 2M ;
+    _edtb = . ;
+  } :NONE
 
   . += LOAD_OFFSET;
   __phys = . ;
@@ -33,7 +37,7 @@ SECTIONS
 
   __phys += SIZEOF(.boot) ;
 
-  .tables (NOLOAD) : {
+  .tables (NOLOAD) : AT(__phys) {
     . = ALIGN(0x1000) ; 
     _pt_start = . ;
     . += 0x10000 ;
@@ -60,35 +64,46 @@ SECTIONS
     *(.text*) ;
     _etext = . ;
   } :text
+
+  __phys += SIZEOF(.text) ;
   
-  .data ALIGN(0x4) : AT(ADDR(.text) + SIZEOF(.text)) {
+  .data ALIGN(0x4) : AT(__phys) {
     _sdata = . ;
     *(.data*) ;
     _edata = . ;
   } :data
 
-  .rodata ALIGN(0x4) : AT(ADDR(.data) + SIZEOF(.data)) {
+  __phys += SIZEOF(.data) ;
+
+  .rodata ALIGN(0x4) : AT(__phys) {
     _srodata = . ;
     *(.rodata*) ; 
+    . = ALIGN(0x8) ;
+    QUAD(0) ;
     _erodata = . ;
   } :rodata
 
-  .bss ALIGN(0x4) (NOLOAD) : {
+  __phys += SIZEOF(.rodata) ;
+
+  .bss ALIGN(0x4) (NOLOAD) : AT(__phys) {
     _sbss = . ;
     *(.bss*) ;
     _ebss = . ;
   } :data
 
+  __phys += SIZEOF(.bss) ;
 
   . = ALIGN(0x1000);
 
-  .stack (NOLOAD) : {
+  .stack (NOLOAD) : AT(__phys) {
     _estack = . ;
     . = . + 0x4000 ;
     _sstack = . - 0x10;
   } :NONE
 
-  .heap (NOLOAD) : {
+  __phys += SIZEOF(.stack) ;
+
+  .heap (NOLOAD) : AT(__phys) {
     _sheap = . ;
     . = . + 1M ;
     _eheap = . ;

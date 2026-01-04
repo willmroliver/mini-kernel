@@ -3,13 +3,16 @@
 
 #include <core/types.h>
 
-static const u32 FDT_HEADER_MAGIC = 0xd00dfeed; 
+#define FDT_HEADER_MAGIC (0xd00dfeed) 
 
-static const u32 FDT_BEGIN_NODE = 0x00000001; // beginning of a ndoe
-static const u32 FDT_END_NODE   = 0x00000002; // end of a nide
-static const u32 FDT_PROP       = 0x00000003; // next token is a property
-static const u32 FDT_NOP        = 0x00000004; // all NOP values can be ignored
-static const u32 FDT_END        = 0x00000009; // end of the structure block
+// The below are formatted big-endian, so that 
+// tokens can be evaluated without byte-reversal 
+
+#define FDT_BEGIN_NODE (0x01000000) // beginning of a node
+#define FDT_END_NODE   (0x02000000) // end of a node
+#define FDT_PROP       (0x03000000) // next token is a property
+#define FDT_NOP        (0x04000000) // all NOP values can be ignored
+#define FDT_END        (0x09000000) // end of the structure block
 
 struct fdt_header {
 	u32 magic;              // should always be 0xd00dfeed
@@ -22,6 +25,10 @@ struct fdt_header {
 	u32 boot_cpuid_phys;    // physical id of boot CPU 
 	u32 size_dt_strings;    // length of strings block
 	u32 size_dt_struct;     // length of structs block
+
+	u32 *dtb_struc;             // ptr to the structure block
+	char *dtb_strings;	        // ptr to the strings block
+	u32 *dtb_mem_rsv;           // ptr to the memory reservation block
 };
 
 // memory reservation blocks are always terminated 
@@ -39,10 +46,11 @@ struct fdt_prop_desc {
 	u32  len;     // length of the proceeding prop description in bytes
 	u32  nameoff; // offset in the strings block of the name of this prop
 	char *name;
-	u8   *prop;
+	void *data;
 };
 
 struct fdt_node {
+	char *name;
 	struct fdt_prop_desc *props;
 	struct fdt_node *subnodes;
 };

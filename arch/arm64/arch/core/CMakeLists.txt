@@ -1,4 +1,5 @@
 target_sources(${CORE_LIB}
   PRIVATE
-    endian.s
+    endian.S
+    mem.S
 )

@@ -4,7 +4,7 @@ set(LOAD_OFFSET 0x200000)
 target_sources(${KERNEL_EXEC}
   PRIVATE
     boot.c
-    boot.s
+    boot.S
 )
 
 set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld)

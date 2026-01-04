@@ -1,135 +1,153 @@
 .section .boot, "ax"
 
+#define tbase x0
+#define pte x1
+#define vaddr x2
+#define lvl x3
+#define is_table x4
+#define lvlend x5
+#define ctrl x6
+#define bitmask x7
+#define trow x8
+#define existing x9
+#define hold x10
+#define paddr x11
+
 _boot_start:
-	ldr x0, =_boot_stack_top
-	mov sp, x0
+	ldr hold, =_boot_stack_top
+	mov sp, hold 
 
 	ldr x0, =_pt_start 
 	ldr x1, =_pt_end
 	bl _zero_64
 
-	bl _init_mmu    // minimum to jump to kernel VA -
-			// one page for kernel, one for boot
+	bl _init_mmu 
 
-	mrs x0, SCTLR_EL1
-	orr x0, x0, #1
-	msr SCTLR_EL1, x0 
+	mrs hold, SCTLR_EL1
+	orr hold, hold, #1
+	msr SCTLR_EL1, hold 
 	isb
-.jump:
-	ldr x19, =_sstack
-	mov sp, x19
 
-	ldr x0, =_ram_start
-	ldr x16, =__boot_main
-	br x16
+	ldr hold, =_sstack
+	mov sp, hold 
+
+	ldr x0, =_sdtb
+	ldr hold, =__boot_main
+	br hold 
 
 _init_mmu:
-	mov x21, xzr              // set to 1 when .boot_va hit
+	mov ctrl, xzr           // set to 1 when .boot_va hit
 
-	ldr x19, =0x80100010      // 48-bit address spaces, 4KB granules
-	msr TCR_EL1, x19
+	ldr hold, =0x80100010   // 48-bit address spaces, 4KB granules
+	msr TCR_EL1, hold
 
-	ldr x19, =0xff            // AttrIdx on PTEs 0 by default
-	msr MAIR_EL1, x19         // So we set slot 0 for MAIR to 0xFF (good default)
-.kernel_va:
-	ldr x22, =_skernel_pa     // PA to map to
-	ldr x10, =0x401           // D_Block | Valid, nG = 0 (no ASID), AF = 1
-	orr x22, x22, x10         // PA | Lower Attributes
-	ldr x2, =_skernel         // VA to map from
+	ldr hold, =0xff         // AttrIdx on PTEs 0 by default
+	msr MAIR_EL1, hold      // So we set slot 0 for MAIR to 0xFF (good default)
+_init_kernel_va:
+	ldr paddr, =_skernel_pa // PA to map to
+	ldr hold, =0x401        // D_Block | Valid, nG = 0 (no ASID), AF = 1
+	orr paddr, paddr, hold  // PA | Lower Attributes
+	ldr vaddr, =_skernel    // VA to map from
 
-	ldr x0, =_pt_start        // table base
-	msr TTBR1_EL1, x0         // kernel page-tables 
-	add x1, x0, #0x1000	  // next PTE Addr
+	ldr tbase, =_pt_start   // table base
+	msr TTBR1_EL1, tbase    // kernel page-tables 
+	add pte, tbase, #0x1000	// next PTE Addr
 
-	mov x19, #0x2             // base_table + 2 stages
-	mov x3, xzr               // stage counter
-	b .stage
-.boot_va:
-	mov x21, #1               // .boot_va hit
-	mov x0, x1		  // next free space for table_base
-	add x1, x0, #0x1000	  // next PTE Addr
+	mov lvlend, #0x2        // base_table + 2 lvls
+	mov lvl, xzr            // lvl counter
+	b 1f 
+_init_boot_va:
+	mov ctrl, #1            // .boot_va hit
+	mov tbase, pte		// next free space for tbase
+	add pte, tbase, #0x1000	// next PTE Addr
 
-	ldr x2, =_sboot		  // 1-1 PA to VA mapping
-	ldr x10, =0x403           // D_Page | Valid, nG = 0 (no ASID), AF = 1
-	orr x22, x2, x10          // PA | Lower Attributes
+	ldr vaddr, =_sboot	// 1-1 PA to VA mapping
+	ldr hold, =0x403        // D_Page | Valid, nG = 0 (no ASID), AF = 1
+	orr paddr, vaddr, hold  // PA | Lower Attributes
 
-	msr TTBR0_EL1, x0         // boot page-tables
-	mov x19, #0x3             // base_table + 3 stages
-	mov x3, xzr               // stage counter
-	b .stage
-.dtb_va:
-	mov x21, #0x2		  // .boot_va & .dtb_va hit
+	msr TTBR0_EL1, tbase    // boot page-tables
+	mov lvlend, #0x3        // base_table + 3 lvls
+	mov lvl, xzr            // lvl counter
+	b 1f
+_init_dtb_va:
+	mov ctrl, #0x2	        // .boot_va & .dtb_va hit
 
-	ldr x2, =_ram_start	  // dtb placed at strt of RAM by qemu virt board
-	mov x3, x2		  // VA = PA
-	ldr x10, =0x401           // D_Block | Valid
-	orr x22, x3, x10	  // DTB PA | Lower Attributes
-	mrs x0, TTBR0_EL1	  // kernel address space
+	ldr vaddr, =_sdtb       // dtb placed at strt of RAM by qemu virt board
+	ldr hold, =0x401        // D_Block | Valid
+	orr paddr, vaddr, hold  // DTB PA | Lower Attributes
+	mrs tbase, TTBR0_EL1    // kernel address space
 	
-	mov x19, #0x2		  // base_table + 2 stages
-	mov x3, xzr
-.stage: 
-	cmp x3, x19               // are we at the target stage?
-	bne .table
-.page:
-	mov x1, x22               // Load PTE configured above
-	mov x4, xzr
-	b .insert
-.table:
-	ldr x10, =0x403           // D_Table | Valid
-	orr x1, x1, x10           // | Attributes
-	mov x4, #1
-.insert:
-	str x2, [sp, #-0x10]! 
-	stp x3, lr, [sp, #-0x10]!
+	mov lvlend, #0x2        // base_table + 2 lvls
+	mov lvl, xzr
+// LEVEL
+1: 
+	cmp lvl, lvlend         // are we at the target level?
+	b.ne 3f
+// PAGE 
+2:
+	mov pte, paddr          // Load PTE configured above
+	mov is_table, xzr
+	b 4f
+// TABLE
+3:
+	ldr hold, =0x403        // D_Table | Valid
+	orr pte, pte, hold      // | Attributes
+	mov is_table, #1
+// INSERT
+4:
+	str vaddr, [sp, #-0x10]! 
+	stp lvl, lr, [sp, #-0x10]!
 	bl _insert_pte
-	// x0 = next table to lookup, x1 = next free loc for new table_base
-	ldp x3, lr, [sp], #0x10
-	ldr x2, [sp], #0x10
+	// tbase = next table to lookup, pte = next free loc for new tbase
+	ldp lvl, lr, [sp], #0x10
+	ldr vaddr, [sp], #0x10
 
-	add x3, x3, #1
-	cmp x3, x19
-	bls .stage
-	cbz x21, .boot_va
-	cmp x21, #0x2
-	bne .dtb_va
+	add lvl, lvl, #1
+	cmp lvl, lvlend 
+	b.ls 1b
+
+	cmp ctrl, #1
+	b.lo _init_boot_va
+	b.eq _init_dtb_va
 
 	ret
 
-// x0 = table_base, x1 = PTE, x2 = VA, x3 = stage, x4 = is_table
+// x0 = tbase, x1 = PTE, x2 = VA, x3 = lvl, x4 = is_table
 // returns: x0 = next table to lookup, x1 = next free space for new table
-_insert_pte:
-	ldr x7, =0x1ff       // 9-bit mask
-	mov x6, #0x3 
-	sub x3, x6, x3       // 3 - stage
-	mov x5, #0x9
-	mul x3, x3, x5       // shift to get table offset
-	add x3, x3, #0xc     // last 12 bits = offset into page
-	lsr x2, x2, x3
-	and x2, x2, x7       // table rows	
-	mov x7, #0x8
-	mul x2, x2, x7       // table rows * entry width = offset
 
-	ldr x5, [x0, x2]     // test if existing entry
-	cbz x5, .insert_new
-	and x0, x5, #-0x1000 // return existing table_base
-	and x1, x1, #-0x1000 // x1 holds next free table_base loc
+_insert_pte:
+	ldr bitmask, =0x1ff           // 9-bit mask
+	mov hold, #0x3 
+	sub trow, hold, lvl           // 3 - lvl
+	mov hold, #0x9
+	mul trow, trow, hold          // shift to get table offset
+	add trow, trow, #0xc          // last 12 bits = offset into page
+	lsr trow, vaddr, trow
+	and trow, trow, bitmask       // table rows	
+	mov hold, #0x8
+	mul trow, trow, hold          // table rows * entry width = offset
+
+	ldr existing, [tbase, trow]   // test if existing entry
+	cbz existing, 1f
+
+	and tbase, existing, #-0x1000 // return existing tbase
+	and pte, pte, #-0x1000        // pte = next free table base
 	ret
-.insert_new:
-	str x1, [x0, x2]
-	cbz x4, .inc_base
-	and x0, x1, #-0x1000 // return table_base addr just created
-.inc_base:
-	add x1, x0, #0x1000  // increment to get next free loc
+1:
+	str pte, [tbase, trow]
+	cbz is_table, 2f
+	and tbase, pte, #-0x1000      // return tbase addr just created
+2:
+	add pte, tbase, #0x1000       // increment to get next free loc
 	ret
 
 // x0 = from_addr, x1 = to_addr (8-byte aligned) 
 _zero_64:
 	mov x3, xzr
-.loop:
+1:
 	cmp x0, x1
-	beq .done
+	beq 2f 
 	str x3, [x0], #0x8
-	b .loop
-.done:
+	b 1b 
+2:
 	ret
