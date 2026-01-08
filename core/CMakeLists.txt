@@ -4,9 +4,11 @@ target_sources(${CORE_LIB}
     FILES 
       endian.h
       mem.h
+      str.h
       types.h 
   PRIVATE 
     mem.c
+    str.c
 )
 
 target_include_directories(${CORE_LIB} 

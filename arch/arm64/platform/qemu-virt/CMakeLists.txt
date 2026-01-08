@@ -16,10 +16,6 @@ target_link_options(${KERNEL_EXEC}
     -Wl,-defsym,LOAD_OFFSET=${LOAD_OFFSET}
 )
 
-target_link_libraries(${KERNEL_EXEC} 
-  PRIVATE ${CORE_LIB} ${DRIVERS_LIB}
-)
-
 set_target_properties(${KERNEL_EXEC} PROPERTIES
   LINK_DEPENDS ${LINKER_SCRIPT}
 )

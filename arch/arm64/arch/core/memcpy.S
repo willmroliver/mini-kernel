@@ -29,14 +29,12 @@
 #define l6w    w15
 #define h6     x16
 #define h6w    w16
-#define tmp1   x13
+#define tmp1   x17
+#define idst  x18
 
 .global memcpy
 memcpy:
-	stp fp, lr, [sp, #-0x20]!
-	str dst, [sp, #0x10]
-	mov fp, sp
-	
+	mov idst, dst
 	add dstend, dst, n
 	add srcend, src, n
 	b 8f
@@ -91,7 +89,6 @@ memcpy:
 
 	ldr l1w, [src], #4
 	str l1w, [dst], #4
-	sub n, n, #4
 3:    
 	cbz n, 0f
 	lsr tmp1, n, #1
@@ -104,7 +101,5 @@ memcpy:
 	strb h1w, [dstend, #-1]
 	strb l2w, [dst, tmp1]
 0:
-	mov sp, fp
-	ldr x0, [sp, #0x10]
-	ldp fp, lr, [sp], #0x20
+	mov x0, idst
 	ret

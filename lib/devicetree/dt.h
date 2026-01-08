@@ -14,6 +14,11 @@
 #define FDT_NOP        (0x04000000) // all NOP values can be ignored
 #define FDT_END        (0x09000000) // end of the structure block
 
+static const char *FDT_PROP_MODEL  = "model";
+static const char *FDT_PROP_REG    = "reg";
+static const char *FDT_PROP_ADDR_C = "#address-cells";
+static const char *FDT_PROP_SIZE_C = "#size-cells";
+
 struct fdt_header {
 	u32 magic;              // should always be 0xd00dfeed
 	u32 totalsize;          // total size of fdt in bytes
@@ -26,9 +31,9 @@ struct fdt_header {
 	u32 size_dt_strings;    // length of strings block
 	u32 size_dt_struct;     // length of structs block
 
-	u32 *dtb_struc;             // ptr to the structure block
-	char *dtb_strings;	        // ptr to the strings block
-	u32 *dtb_mem_rsv;           // ptr to the memory reservation block
+	u32 *dtb_struc;         // ptr to the structure block
+	char *dtb_strings;      // ptr to the strings block
+	u32 *dtb_mem_rsv;       // ptr to the memory reservation block
 };
 
 // memory reservation blocks are always terminated 
@@ -49,9 +54,18 @@ struct fdt_prop_desc {
 	void *data;
 };
 
+struct fdt_reg {
+	paddr_t addr;
+	u64 size;
+};
+
 struct fdt_node {
 	char *name;
+	u32 n_prop;
+	u32 n_sub;
+	u32 n_reg;
 	struct fdt_prop_desc *props;
+	struct fdt_reg *reg;
 	struct fdt_node *subnodes;
 };
 
@@ -61,8 +75,19 @@ struct fdt_node {
  *
  * Can optionally pass in a header struct to retrieve metadata.
  */
-struct fdt_node *fdt_parse(void *data, struct fdt_header* header);
+struct fdt_node *fdt_parse(void *data, struct fdt_header *header);
 
-void fdt_destroy(struct fdt_node* fdt);
+/**
+ * Frees all non-stack memory allocated to a parsed device tree
+ */
+void fdt_destroy(struct fdt_node *node);
+
+/**
+ * Traverse the device tree, applying a callback with an optional argument
+ * to each node
+ */
+void dt_traverse(struct fdt_node *node, 
+		 void (*cb)(struct fdt_node *node, void *arg), 
+		 void *arg);
 
 #endif

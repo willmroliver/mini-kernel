@@ -2,11 +2,11 @@ KERNEL_VMA = 0xffff000000000000 ;
 
 PHDRS
 {
-  boot   PT_LOAD FLAGS(RX) ;
-  vtable PT_LOAD FLAGS(RX) ;
-  text   PT_LOAD FLAGS(RX) ;
-  data   PT_LOAD FLAGS(RW) ;
-  rodata PT_LOAD FLAGS(R)  ;
+  boot       PT_LOAD FLAGS(RX) ;
+  vtable     PT_LOAD FLAGS(RX) ;
+  text       PT_LOAD FLAGS(RX) ;
+  data       PT_LOAD FLAGS(RW) ;
+  rodata     PT_LOAD FLAGS(R)  ;
 }
 
 ENTRY(_sboot)
@@ -37,17 +37,17 @@ SECTIONS
 
   __phys += SIZEOF(.boot) ;
 
-  .tables (NOLOAD) : AT(__phys) {
+  .ptable (NOLOAD) : AT(__phys) {
     . = ALIGN(0x1000) ; 
     _pt_start = . ;
-    . += 0x10000 ;
+    . += 1M ;
     _pt_end = . ;
   } :NONE
 
   . = KERNEL_VMA ;
   _skernel = . ;
   
-  __phys = ALIGN(__phys, 2M) ;
+  __phys = ALIGN(__phys + SIZEOF(.ptable), 2M) ;
   _skernel_pa = __phys ;
 
   .vtable : AT(__phys) {
@@ -86,8 +86,10 @@ SECTIONS
   __phys += SIZEOF(.rodata) ;
 
   .bss ALIGN(0x4) (NOLOAD) : AT(__phys) {
+    . = ALIGN(0x10) ;
     _sbss = . ;
     *(.bss*) ;
+    . = ALIGN(0x10) ;
     _ebss = . ;
   } :data
 

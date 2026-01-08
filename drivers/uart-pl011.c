@@ -1,144 +1,150 @@
 #include "uart-pl011.h"
 
-void uart_baud_init(int hz, int rate)
-{
-	unsigned int div, int_part, frac_part;
+void uart_driver_dt_init(uart_base_t *uart,
+			 struct fdt_node *node, 
+			 int clk_hz, 
+			 int baud_rate)
+{}
 
-	div = (hz * 4 + rate / 2) / rate;   	
+void uart_baud_init(uart_base_t *uart, int hz, int rate)
+{
+	u32 div, int_part, frac_part;
+
+	div = (hz*4 + rate/2) / rate;   	
 	int_part  = div / 64;
 	frac_part = div % 64;
 
-	UART->IBRD = int_part;
-	UART->FBRD = frac_part;
+	uart->IBRD = int_part;
+	uart->FBRD = frac_part;
 }
 
-void uart_enable(int enable)
+void uart_enable(uart_base_t *uart, int enable)
 {
-	unsigned int ctrl = UART->CR;
+	u32 ctrl = uart->CR;
 
 	if (enable)
 		ctrl |= 0x1;
 	else
 		ctrl &= (~0x1);
 
-	UART->CR = ctrl;
+	uart->CR = ctrl;
 }
 
-void uart_fifo_enable(int enable)
+void uart_fifo_enable(uart_base_t *uart, int enable)
 {
-	char ctrl = UART->LCR_H;
+	char ctrl = uart->LCR_H;
 
 	if (enable)
 		ctrl |= 0x10;
 	else 
 		ctrl &= (~0x10);
 
-	UART->LCR_H = ctrl;
+	uart->LCR_H = ctrl;
 }
 
-void uart_transmit_enable(int enable)
+void uart_transmit_enable(uart_base_t *uart, int enable)
 {
-	unsigned int ctrl = UART->CR;
-	unsigned int mask = (0x1 << 8);
+	u32 ctrl = uart->CR;
+	u32 mask = (0x1 << 8);
 
 	if (enable)
 		ctrl |= mask;
 	else 
 		ctrl &= (~mask);
 
-	UART->CR = ctrl;
+	uart->CR = ctrl;
 }
 
-void uart_receive_enable(int enable)
+void uart_receive_enable(uart_base_t *uart, int enable)
 {
-	unsigned int ctrl = UART->CR;
-	unsigned int mask = (0x1 << 9);
+	u32 ctrl = uart->CR;
+	u32 mask = (0x1 << 9);
 
 	if (enable)
 		ctrl |= mask;
 	else 
 		ctrl &= (~mask);
 
-	UART->CR = ctrl;
+	uart->CR = ctrl;
 }
 
-int uart_flags_busy()
+int uart_flags_busy(uart_base_t *uart)
 {
-	unsigned int flags = UART->FR;
+	u32 flags = uart->FR;
 	return flags & 0x8;
 }
 
-int uart_flags_tx_full()
+int uart_flags_tx_full(uart_base_t *uart)
 {
-	unsigned int flags = UART->FR;
+	u32 flags = uart->FR;
 	return flags & 0x20;
 }
 
-int uart_flags_rx_empty()
+int uart_flags_rx_empty(uart_base_t *uart)
 {
-	unsigned int flags = UART->FR;
+	u32 flags = uart->FR;
 	return flags & 0x10;
 }
 
-void uart_transmit_init(int fifo)
+void uart_transmit_init(uart_base_t *uart, int fifo)
 {
-	uart_enable(0);
-	while (UART->FR & 0x8); // BUSY
-	uart_fifo_enable(0);
+	uart_enable(uart, 0);
+	while (uart->FR & 0x8); // BUSY
+	uart_fifo_enable(uart, 0);
 
-	uart_transmit_enable(1);
+	uart_transmit_enable(uart, 1);
 	
 	if (fifo)
-		uart_fifo_enable(1);
+		uart_fifo_enable(uart, 1);
 
-	uart_enable(1);
+	uart_enable(uart, 1);
 }
 
-void uart_receive_init(int fifo)
+void uart_receive_init(uart_base_t *uart, int fifo)
 {
-	uart_enable(0);
-	while (UART->FR & 0x8); // BUSY
-	uart_fifo_enable(0);
+	uart_enable(uart, 0);
+	while (uart->FR & 0x8); // BUSY
+	uart_fifo_enable(uart, 0);
 
-	uart_receive_enable(1);
+	uart_receive_enable(uart, 1);
 
 	if (fifo)
-		uart_fifo_enable(1);
+		uart_fifo_enable(uart, 1);
 
-	uart_enable(1);
+	uart_enable(uart, 1);
 }
 
-void uart_init(int fifo)
+void uart_init(uart_base_t *uart, int fifo)
 {
-	int ctrl = UART->CR;
+	int ctrl = uart->CR;
 	int tx_rx_mask = (0x3 << 8);
 
-	uart_enable(0);
-	while (UART->FR & 0x8); // BUSY
-	uart_fifo_enable(0);
+	uart_enable(uart, 0);
+	while (uart->FR & 0x8); // BUSY
+	uart_fifo_enable(uart, 0);
 
-	UART->CR = ctrl | tx_rx_mask;
+	uart->CR = ctrl | tx_rx_mask;
 
 	if (fifo)
-		uart_fifo_enable(1);
+		uart_fifo_enable(uart, 1);
 	
-	uart_enable(1);
+	uart_enable(uart, 1);
 }
 
-char uart_read()
+char uart_read(uart_base_t *uart)
 {
 	int data;
 
-	while (UART->FR & 0x10); // RXFE
-	data = UART->DR;
+	while (uart->FR & 0x10); // RXFE
+	data = uart->DR;
 
 	return (char)data;
 }
 
-void uart_write(char b)
+void uart_write(uart_base_t *uart, char b)
 {
 	int mask = 0x8 | 0x20; // BUSY or TXFF 
 
-	while (UART->FR & mask);
-	UART->DR = b;
+	while (uart->FR & mask);
+	uart->DR = b;
 }

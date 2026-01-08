@@ -5,6 +5,7 @@ target_sources(${CORE_LIB}
       dt.h
   PRIVATE
     fdt.c
+    dt.c
 )
 
 target_include_directories(${CORE_LIB}

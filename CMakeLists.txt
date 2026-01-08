@@ -53,6 +53,8 @@ add_library(${CORE_LIB})
 set_standards(${CORE_LIB})
 set_freestanding(${CORE_LIB})
 
+target_include_directories(${CORE_LIB} PRIVATE inc)
+
 add_subdirectory(core)
 add_subdirectory(sys)
 add_subdirectory(mem)
@@ -63,7 +65,9 @@ function(add_platform _ARCH _PLAT)
   add_executable(${KERNEL_EXEC})
   set_standards(${KERNEL_EXEC})
   set_freestanding(${KERNEL_EXEC})
-  
+
+  target_link_libraries(${KERNEL_EXEC} PRIVATE ${CORE_LIB})
+ 
   add_subdirectory(arch)
   add_subdirectory(lib)
 endfunction()
