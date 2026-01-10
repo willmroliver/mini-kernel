@@ -56,69 +56,71 @@ _boot_enable_mmu:
 	b 1b
 
 _init_mmu:
-	mov ctrl, xzr           // set to 1 when .boot_va hit
+	mov ctrl, xzr               // set to 1 when .boot_va hit
 
-	ldr hold, =0x80100010   // 48-bit address spaces, 4KB granules
+	ldr hold, =0x80100010       // 48-bit address spaces, 4KB granules
 	msr TCR_EL1, hold
 
-	ldr hold, =0x00ff       // AttrId0 = normal memory, AttrId1 = device memory (nGnRnE)
+	ldr hold, =0x00ff           // AttrId0 = normal memory, 
+				    //  AttrId1 = device memory (nGnRnE)
 	msr MAIR_EL1, hold      
 _init_kernel_va:
-	ldr paddr, =_start_phys // PA to map to
-	ldr hold, =0x401        // D_Block | Valid, nG = 0 (no ASID), AF = 1
-	orr paddr, paddr, hold  // PA | Lower Attributes
-	ldr vaddr, =_start    // VA to map from
+	ldr paddr, =_start_phys     // PA to map to
+	ldr hold, =0x401            // D_Block | Valid, nG = 0 (no ASID), AF = 1
+	orr paddr, paddr, hold      // PA | Lower Attributes
+	ldr vaddr, =_start          // VA to map from
 
 	ldr tbase, =_sptable_phys   // table base
-	msr TTBR1_EL1, tbase    // kernel page-tables 
-	add pte, tbase, #0x1000	// next PTE Addr
+	msr TTBR1_EL1, tbase        // kernel page-tables 
+	add pte, tbase, #0x1000	    // next PTE Addr
 
-	mov stageend, #0x2      // base_table + 2 stages
-	mov stage, xzr          // stage counter
+	mov stageend, #0x2          // base_table + 2 stages
+	mov stage, xzr              // stage counter
 	b 1f 
 _init_boot_va:
-	mov ctrl, #1            // .boot_va hit
-	mov tbase, pte		// next free space for tbase
-	add pte, tbase, #0x1000	// next PTE Addr
+	mov ctrl, #1                // .boot_va hit
+	mov tbase, pte		    // next free space for tbase
+	add pte, tbase, #0x1000	    // next PTE Addr
 
-	ldr vaddr, =_sboot	// 1-1 PA to VA mapping
-	ldr hold, =0x403        // D_Page | Valid, nG = 0 (no ASID), AF = 1
-	orr paddr, vaddr, hold  // PA | Lower Attributes
+	ldr vaddr, =_sboot	    // 1-1 PA to VA mapping
+	ldr hold, =0x403            // D_Page | Valid, nG = 0 (no ASID), AF = 1
+	orr paddr, vaddr, hold      // PA | Lower Attributes
 
-	msr TTBR0_EL1, tbase    // boot page-tables
-	mov stageend, #0x3      // base_table + 3 stages
-	mov stage, xzr          // stage counter
+	msr TTBR0_EL1, tbase        // boot page-tables
+	mov stageend, #0x3          // base_table + 3 stages
+	mov stage, xzr              // stage counter
 	b 1f
 _init_dtb_va:
-	mov ctrl, #0x2	        // .boot_va & .dtb_va hit
+	mov ctrl, #0x2	            // .boot_va & .dtb_va hit
 
-	ldr vaddr, =_sdtb       // dtb placed at start of RAM by qemu virt board
-	ldr hold, =0x401        // D_Block | Valid
-	orr paddr, vaddr, hold  // DTB PA | Lower Attributes
-	mrs tbase, TTBR0_EL1    // lower address space
+	ldr vaddr, =_sdtb           // dtb placed at start of RAM by qemu virt board
+	ldr hold, =0x401            // D_Block | Valid
+	orr paddr, vaddr, hold      // DTB PA | Lower Attributes
+	mrs tbase, TTBR0_EL1        // lower address space
 	
-	mov stageend, #0x2      // base_table + 2 stages
+	mov stageend, #0x2          // base_table + 2 stages
 	mov stage, xzr
 // LEVEL
 1: 
-	cmp stage, stageend     // are we at the target level?
+	cmp stage, stageend         // are we at the target level?
 	b.ne 3f
 // PAGE 
 2:
-	mov pte, paddr          // Load PTE configured above
+	mov pte, paddr              // Load PTE configured above
 	mov is_table, xzr
 	b 4f
 // TABLE
 3:
-	ldr hold, =0x403        // D_Table | Valid
-	orr pte, pte, hold      // | Attributes
+	ldr hold, =0x403            // D_Table | Valid
+	orr pte, pte, hold          // | Attributes
 	mov is_table, #1
 // INSERT
 4:
 	str vaddr, [sp, #-0x10]! 
 	stp stage, lr, [sp, #-0x10]!
-	bl _insert_pte
-	// tbase = next table to lookup, pte = next free loc for new tbase
+	bl _insert_pte		    // tbase = next table to lookup, 
+	                            //	pte = next free loc for new tbase
+				    
 	ldp stage, lr, [sp], #0x10
 	ldr vaddr, [sp], #0x10
 

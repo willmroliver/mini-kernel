@@ -12,7 +12,7 @@ void __boot_main(void *fdt, struct mmu_config *c)
 {
 	struct mem_bump mem;
 	struct fdt_node *dt;
-	uart_base_t *uart;
+	struct uart *uart;
 
 	__init_exception_handlers(0);
 	__init_mmu(c);
@@ -25,5 +25,6 @@ void __boot_main(void *fdt, struct mmu_config *c)
 	uart_init(uart, 1);
 
 	for (;;)
-		uart_write(uart, '1');
+		uart_putc(uart, uart_getc(uart));
 }
+

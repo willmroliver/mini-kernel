@@ -4,6 +4,6 @@
 #include <drivers/uart-pl011.h>
 #include "dt.h"
 
-uart_base_t *dt_init_uart_pl011(struct fdt_node *dt);
+struct uart *dt_init_uart_pl011(struct fdt_node *dt);
 
 #endif

@@ -20,9 +20,8 @@ static int __dt_uart_tst(struct fdt_node *node, void *arg)
 	return 0;
 }
 
-uart_base_t *dt_init_uart_pl011(struct fdt_node *dt)
+struct uart *dt_init_uart_pl011(struct fdt_node *dt)
 {
-	
 	struct mmu_mapping mem;
 	struct fdt_node *node = 0;
 
@@ -39,5 +38,5 @@ uart_base_t *dt_init_uart_pl011(struct fdt_node *dt)
 	mmu_map(&mem, 0);
 
 	// @TODO - dynamically determine clk_hz from node `clocks` phandle
-	return uart_driver_init(mem.va, 0x16e3600, DEFAULT_BAUD_RATE);
+	return uart_driver_init(mem.va, 0x16e3600, DEFAULT_BAUD_RATE, 0x100);
 }

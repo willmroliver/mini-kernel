@@ -3,41 +3,38 @@
 #include <sys/mmu.h>
 #include "mmu.h"
 
-const u64 MMU_TABLE_UATTR_NSTable   = BIT(63);
-const u64 MMU_TABLE_UATTR_APTable   = BITS_64(62,61);
+static const u64 MMU_TABLE_UATTR_NSTable   = BIT(63);
+static const u64 MMU_TABLE_UATTR_APTable   = BITS_64(62,61);
                                                            
-const u64 MMU_TABLE_NLTA_4KB        = BITS_64(47,12);
-const u64 MMU_TABLE_NLTA_16KB       = BITS_64(47,14);
-const u64 MMU_TABLE_NLTA_64KB       = BITS_64(47,16);
-const u64 MMU_TABLE_NLTA_MASK       = BITS_64(47,12);
+static const u64 MMU_TABLE_NLTA_4KB        = BITS_64(47,12);
+static const u64 MMU_TABLE_NLTA_16KB       = BITS_64(47,14);
+static const u64 MMU_TABLE_NLTA_64KB       = BITS_64(47,16);
+static const u64 MMU_TABLE_NLTA_MASK       = BITS_64(47,12);
 
-const u64 MMU_TABLE_AF              = BIT(10);
-const u64 MMU_TABLE_AF_MASK         = BIT(10);
-const u64 MMU_TABLE_DESCRIPTOR      = BIT(1);
-const u64 MMU_TABLE_VALID           = BIT(0);
+static const u64 MMU_TABLE_AF              = BIT(10);
+static const u64 MMU_TABLE_AF_MASK         = BIT(10);
+static const u64 MMU_TABLE_DESCRIPTOR      = BIT(1);
+static const u64 MMU_TABLE_VALID           = BIT(0);
 
-const u64 MMU_PAGE_UATTR_Contiguous = BIT(52);
-const u64 MMU_PAGE_UATTR_GP         = BIT(50);
-const u64 MMU_PAGE_L1_BLOCK_OA_4KB  = BITS_64(47,30);
-const u64 MMU_PAGE_L2_BLOCK_OA_4KB  = BITS_64(47,21);
-const u64 MMU_PAGE_L2_BLOCK_OA_16KB = BITS_64(47,25);
-const u64 MMU_PAGE_L2_BLOCK_OA_64KB = BITS_64(47,29);
-const u64 MMU_PAGE_OA_4KB           = BITS_64(47,12);
-const u64 MMU_PAGE_OA_16KB          = BITS_64(47,14);
-const u64 MMU_PAGE_OA_64KB          = BITS_64(47,16);
-const u64 MMU_PAGE_AF               = BIT(10);
-const u64 MMU_PAGE_SH               = BITS_64(9,8);
-const u64 MMU_PAGE_AttrIndx         = BITS_64(4,2);
-const u64 MMU_PAGE_DESCRIPTOR       = BIT(1); 
-const u64 MMU_PAGE_VALID            = BIT(0);
+static const u64 MMU_PAGE_UATTR_Contiguous = BIT(52);
+static const u64 MMU_PAGE_UATTR_GP         = BIT(50);
+static const u64 MMU_PAGE_L1_BLOCK_OA_4KB  = BITS_64(47,30);
+static const u64 MMU_PAGE_L2_BLOCK_OA_4KB  = BITS_64(47,21);
+static const u64 MMU_PAGE_L2_BLOCK_OA_16KB = BITS_64(47,25);
+static const u64 MMU_PAGE_L2_BLOCK_OA_64KB = BITS_64(47,29);
+static const u64 MMU_PAGE_OA_4KB           = BITS_64(47,12);
+static const u64 MMU_PAGE_OA_16KB          = BITS_64(47,14);
+static const u64 MMU_PAGE_OA_64KB          = BITS_64(47,16);
+static const u64 MMU_PAGE_AF               = BIT(10);
+static const u64 MMU_PAGE_SH               = BITS_64(9,8);
+static const u64 MMU_PAGE_AttrIndx         = BITS_64(4,2);
+static const u64 MMU_PAGE_DESCRIPTOR       = BIT(1); 
+static const u64 MMU_PAGE_VALID            = BIT(0);
 
-const u64 SIZE_PAGE                 = 0x1000;
-const u64 SIZE_BLOCK                = 0x200000;
+static const u64 SIZE_PAGE                 = 0x1000;
+static const u64 SIZE_BLOCK                = 0x200000;
 
-const u64 VA_START       = 0;
-const u64 VA_LOWER_END   = 0x0000ffffffffffff;
-const u64 VA_UPPER_START = 0xffff000000000000;
-const u64 VA_END         = -1;
+static const u64 VA_END         = -1;
 
 static struct mmu_config __config;
 static vaddr_t va_end_free = VA_END;
@@ -76,7 +73,8 @@ static inline u64 pte_page(paddr_t pa, struct mmu_mapping *m)
 		MMU_PAGE_DESCRIPTOR |
 		MMU_PAGE_AF;
 
-	return mask_set_bits_64(pa|page_attr, m->attr_indx, ~MMU_PAGE_AttrIndx, 8);
+	return mask_set_bits_64(pa|page_attr, m->attr_indx, 
+			 ~MMU_PAGE_AttrIndx, 8);
 }
 
 static inline u64 pte_block(paddr_t pa, struct mmu_mapping *m)
