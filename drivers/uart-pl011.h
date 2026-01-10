@@ -25,10 +25,9 @@ typedef struct {
 	volatile u32 DMACR;         // 0x48
 } uart_base_t;
 
-void uart_driver_dt_init(uart_base_t *,
-			 struct fdt_node *node, 
-			 int clk_hz, 
-			 int baud_rate);
+uart_base_t *uart_driver_init(paddr_t reg, 
+			      int clk_hz, 
+			      int baud_rate);
 
 /**
  * Initializes the device with the specified clock frequency and baud rate.

@@ -1,10 +1,13 @@
 #include "uart-pl011.h"
 
-void uart_driver_dt_init(uart_base_t *uart,
-			 struct fdt_node *node, 
-			 int clk_hz, 
-			 int baud_rate)
-{}
+uart_base_t *uart_driver_init(paddr_t reg,
+			      int clk_hz, 
+			      int baud_rate)
+{
+	uart_base_t *uart = (uart_base_t *)reg;
+	uart_baud_init(uart, clk_hz, baud_rate);
+	return uart;
+}
 
 void uart_baud_init(uart_base_t *uart, int hz, int rate)
 {

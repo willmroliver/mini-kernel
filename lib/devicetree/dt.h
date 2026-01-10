@@ -1,7 +1,8 @@
-#ifndef INC_FDT_H
-#define INC_FDT_H
+#ifndef INC_LIB_DEVICETREE_DT_H
+#define INC_LIB_DEVICETREE_DT_H
 
 #include <core/types.h>
+#include <core/str.h>
 
 #define FDT_HEADER_MAGIC (0xd00dfeed) 
 
@@ -84,10 +85,17 @@ void fdt_destroy(struct fdt_node *node);
 
 /**
  * Traverse the device tree, applying a callback with an optional argument
- * to each node
+ * to each node.
+ * 
+ * To terminate traversal early, *cb can return 1 
  */
 void dt_traverse(struct fdt_node *node, 
-		 void (*cb)(struct fdt_node *node, void *arg), 
+		 int (*cb)(struct fdt_node *node, void *arg), 
 		 void *arg);
+
+/**
+ * Retrieve a node prop by name
+ */
+struct fdt_prop_desc *dt_prop(struct fdt_node *node, const char *name);
 
 #endif

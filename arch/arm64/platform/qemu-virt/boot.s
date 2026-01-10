@@ -17,31 +17,39 @@ _boot_start:
 	ldr hold, =_boot_stack_top
 	mov sp, hold 
 
-	ldr x0, =_pt_start 
-	ldr x1, =_pt_end
+	ldr x0, =_sptable_phys
+	ldr x1, =_eptable_phys
 	bl _zero_a16
 
 	bl _init_mmu 
-_init_mmu_done:
+_boot_enable_mmu:
 	mrs hold, SCTLR_EL1
 	orr hold, hold, #1
 	msr SCTLR_EL1, hold 
 	isb
 
+	// save pte (x1)
+	mov x20, pte
+
+	// zero .bss
 	ldr x0, =_sbss
 	ldr x1, =_ebss
 	bl _zero_a16
 
+	// x0 = DTB ptr, x1 = MMU config ptr
+	ldr x0, =_sdtb
+	ldr x2, =_k_offset
+	ldr x3, =_sptable
+	ldr x4, =_eptable
+	mov x5, x20
+
+	stp x4, x5, [sp, #-0x10]!
+	stp x2, x3, [sp, #-0x10]!
+	mov x1, sp
+
 	ldr hold, =_sstack
 	mov sp, hold 
 
-	ldr x0, =_sdtb
-	ldr hold, [x0]
-	str hold, [x0]
-	mov x3, pte 
-	ldr x1, =_pt_start
-	ldr x2, =_pt_end
-	// x0 = device tree blob ptr, x1 = next free ptable loc ptr
 	ldr hold, =__boot_main
 	br hold 
 1:
@@ -56,12 +64,12 @@ _init_mmu:
 	ldr hold, =0x00ff       // AttrId0 = normal memory, AttrId1 = device memory (nGnRnE)
 	msr MAIR_EL1, hold      
 _init_kernel_va:
-	ldr paddr, =_skernel_pa // PA to map to
+	ldr paddr, =_start_phys // PA to map to
 	ldr hold, =0x401        // D_Block | Valid, nG = 0 (no ASID), AF = 1
 	orr paddr, paddr, hold  // PA | Lower Attributes
-	ldr vaddr, =_skernel    // VA to map from
+	ldr vaddr, =_start    // VA to map from
 
-	ldr tbase, =_pt_start   // table base
+	ldr tbase, =_sptable_phys   // table base
 	msr TTBR1_EL1, tbase    // kernel page-tables 
 	add pte, tbase, #0x1000	// next PTE Addr
 

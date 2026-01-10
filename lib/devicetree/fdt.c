@@ -35,7 +35,7 @@ static inline void fdt_node_count(u32 *data, struct fdt_node *node)
 	node->subnodes = kmalloc(sizeof(struct fdt_node) * node->n_sub);
 }
 
-static u32 *fdt_node_name(u32 *data, struct fdt_node *node)
+static inline u32 *fdt_node_name(u32 *data, struct fdt_node *node)
 {
 	int n;
 	char *data_char = (char *)(data + 1);
@@ -51,7 +51,7 @@ static u32 *fdt_node_name(u32 *data, struct fdt_node *node)
 	return data + ((n+7)/4);
 }
 
-static u32 *fdt_prop_parse(u32 *data,
+static inline u32 *fdt_prop_parse(u32 *data,
 			   struct fdt_prop_desc *prop,
 			   struct fdt_header *header)
 {
@@ -105,11 +105,12 @@ static u32 *fdt_node_parse(u32 *data,
 
 static inline u64 fdt_prop_decode_int(u32 *data, size_t n)
 {
+	// branchless eval of 32 and 64 bit <prop-encoded-array> 
 	return reverse_endian_u32(data[n/2]) << (32 * (n/2)) 
 		| reverse_endian_u32(data[0]);
 }
 
-void fdt_reg_evaluate(struct fdt_node *node, u32 addr_c, u32 size_c)
+static inline void fdt_reg_evaluate(struct fdt_node *node, u32 addr_c, u32 size_c)
 {
 	struct fdt_prop_desc *prop = 0;
 	char *name;
@@ -146,7 +147,7 @@ void fdt_reg_evaluate(struct fdt_node *node, u32 addr_c, u32 size_c)
 
 struct fdt_node *fdt_parse(void *data, struct fdt_header *header)
 {
-	int size = sizeof(struct fdt_header), i;
+	int size = sizeof(struct fdt_header);
 	u32 *header_u32;
 
 	struct fdt_node *node = kmalloc(sizeof(struct fdt_node));
@@ -157,7 +158,7 @@ struct fdt_node *fdt_parse(void *data, struct fdt_header *header)
 	*header = *(struct fdt_header *)(data);
 	header_u32 = (u32*)(void*)(header);
 
-	for (i = 0; i < (size / sizeof(u32)) - 3; i++)
+	for (int i = 0; i < (size / sizeof(u32)) - 3; i++)
 		header_u32[i] = reverse_endian_u32(header_u32[i]);
 	
 	header->dtb_struc = data + header->off_dt_struct;
@@ -178,14 +179,12 @@ struct fdt_node *fdt_parse(void *data, struct fdt_header *header)
 
 void fdt_destroy(struct fdt_node *node)
 { 
-	int i;
-
-	for (i = 0; i < node->n_prop; i++) {
+	for (int i = 0; i < node->n_prop; i++) {
 		kfree(node->props[i].name);
 		kfree(node->props[i].data);
 	}
 
-	for (i = 0; i < node->n_sub; i++)
+	for (int i = 0; i < node->n_sub; i++)
 		fdt_destroy(node->subnodes + i);
 	
 	kfree(node->name);

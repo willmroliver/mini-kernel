@@ -7,7 +7,8 @@
 #define BITS(to, from)    ((-1u >> ((8*sizeof(int)) - (to - from + 1))) << from)
 #define BITS_64(to, from) ((0xffffffffffffffff >> (64 - (to - from + 1))) << from)
 #define BITS_32(to, from) ((0xffffffff >> (32 - (to - from + 1))) << from)
-#define ALIGN_FWD(n, a)   ((n + (a - 1)) & a)
+#define ALIGN(n, a)	  (n & ~(a - 1))
+#define ALIGN_FWD(n, a)   ((n + (a - 1)) & ~(a - 1))
 
 static inline u64 set_bits_64(u64 target, u64 bits, int to, int from)
 {

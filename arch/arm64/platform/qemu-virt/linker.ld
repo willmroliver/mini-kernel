@@ -1,4 +1,4 @@
-KERNEL_VMA = 0xffff000000000000 ;
+KERNEL_VA = 0xffff000000000000 ;
 
 PHDRS
 {
@@ -13,7 +13,8 @@ ENTRY(_sboot)
 
 SECTIONS
 {
-  . = LOAD_ADDRESS ;
+  _ram_start = LOAD_ADDRESS ;
+  . = _ram_start ;
 
   .dtb (NOLOAD) : AT(LOAD_ADDRESS) {
     _sdtb = . ;
@@ -21,10 +22,7 @@ SECTIONS
     _edtb = . ;
   } :NONE
 
-  . += LOAD_OFFSET;
-  __phys = . ;
-
-  .boot : AT(__phys) {
+  .boot : AT(LOADADDR(.dtb) + SIZEOF(.dtb)) {
     _sboot = . ;
     *(.boot*) ;
     . = ALIGN(0x10) ;
@@ -35,47 +33,42 @@ SECTIONS
     _eboot = . ;
   } :boot
 
-  __phys += SIZEOF(.boot) ;
+  . = ALIGN(2M) ;
+  _start_phys = . ;
 
-  .ptable (NOLOAD) : AT(__phys) {
-    . = ALIGN(0x1000) ; 
-    _pt_start = . ;
+  _k_offset = KERNEL_VA ;
+  . = _k_offset + _start_phys ;
+
+  _start = . ;
+  
+  .ptable (NOLOAD) : AT(_start_phys) {
+    _sptable_phys = LOADADDR(.ptable) ;
+    _sptable = . ;
     . += 1M ;
-    _pt_end = . ;
+    _eptable_phys = LOADADDR(.ptable) + SIZEOF(.ptable) ;
+    _eptable = . ;
   } :NONE
 
-  . = KERNEL_VMA ;
-  _skernel = . ;
-  
-  __phys = ALIGN(__phys + SIZEOF(.ptable), 2M) ;
-  _skernel_pa = __phys ;
-
-  .vtable : AT(__phys) {
+  .vtable : {
     _svtable = . ;
     KEEP(*(.vtable*)) ;
     . = ALIGN(0x1000) ;
     _evtable = . ;
   } :vtable
 
-  __phys += SIZEOF(.vtable) ;
-  
-  .text ALIGN(0x1000) : AT(__phys) {
+  .text ALIGN(0x1000) : {
     _stext = . ;
     *(.text*) ;
     _etext = . ;
   } :text
 
-  __phys += SIZEOF(.text) ;
-  
-  .data ALIGN(0x4) : AT(__phys) {
+  .data ALIGN(0x4) : {
     _sdata = . ;
     *(.data*) ;
     _edata = . ;
   } :data
 
-  __phys += SIZEOF(.data) ;
-
-  .rodata ALIGN(0x4) : AT(__phys) {
+  .rodata ALIGN(0x4) : {
     _srodata = . ;
     *(.rodata*) ; 
     . = ALIGN(0x8) ;
@@ -83,9 +76,7 @@ SECTIONS
     _erodata = . ;
   } :rodata
 
-  __phys += SIZEOF(.rodata) ;
-
-  .bss ALIGN(0x4) (NOLOAD) : AT(__phys) {
+  .bss ALIGN(0x4) (NOLOAD) : {
     . = ALIGN(0x10) ;
     _sbss = . ;
     *(.bss*) ;
@@ -93,19 +84,15 @@ SECTIONS
     _ebss = . ;
   } :data
 
-  __phys += SIZEOF(.bss) ;
-
   . = ALIGN(0x1000);
 
-  .stack (NOLOAD) : AT(__phys) {
+  .stack (NOLOAD) : {
     _estack = . ;
     . = . + 0x4000 ;
     _sstack = . - 0x10;
   } :NONE
 
-  __phys += SIZEOF(.stack) ;
-
-  .heap (NOLOAD) : AT(__phys) {
+  .heap (NOLOAD) : {
     _sheap = . ;
     . = . + 1M ;
     _eheap = . ;

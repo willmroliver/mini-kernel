@@ -4,6 +4,13 @@
 #include <arch/sys/mmu.h>
 #include <core/types.h>
 
+struct mmu_config {
+	vaddr_t k_offset;
+	paddr_t pt_start;
+	paddr_t pt_end;
+	mmu_table_t *pt_next;	
+};
+
 struct mmu_mapping {
 	paddr_t pa;
 	vaddr_t va;
@@ -11,8 +18,8 @@ struct mmu_mapping {
 	int attr_indx;
 };
 
-void __init_mmu(paddr_t start, paddr_t end, paddr_t next);
+void __init_mmu(const struct mmu_config *c);
 
-u64 mmu_map(mmu_table_t *base, struct mmu_mapping *m);
+u64 mmu_map(struct mmu_mapping *m, mmu_table_t *base);
 
 #endif

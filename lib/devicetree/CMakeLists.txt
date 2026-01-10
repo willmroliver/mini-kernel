@@ -3,9 +3,11 @@ target_sources(${CORE_LIB}
     BASE_DIRS ${CMAKE_SOURCE_DIR}
     FILES 
       dt.h
+      init.h
   PRIVATE
     fdt.c
     dt.c
+    init/uart-pl011.c
 )
 
 target_include_directories(${CORE_LIB}

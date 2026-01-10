@@ -10,8 +10,8 @@ size_t strlen(const char *s)
 
 int strcmp(const char *s0, const char *s1)
 {
-	int cmp = 0, i;
-	for (i = 0; ; i++) {
+	int cmp = 0;
+	for (int i = 0; ; i++) {
 		cmp += (s0[i] != s1[i]);
 		if (s0[i] == '\0')
 			break;

@@ -34,34 +34,33 @@ const u64 MMU_PAGE_VALID            = BIT(0);
 const u64 SIZE_PAGE                 = 0x1000;
 const u64 SIZE_BLOCK                = 0x200000;
 
-#define MMU_TABLE_KERNEL ((mmu_table_t *)(pt_start))
+const u64 VA_START       = 0;
+const u64 VA_LOWER_END   = 0x0000ffffffffffff;
+const u64 VA_UPPER_START = 0xffff000000000000;
+const u64 VA_END         = -1;
 
-static paddr_t pt_start, pt_end, pt_next;
+static struct mmu_config __config;
+static vaddr_t va_end_free = VA_END;
 
-void __init_mmu(paddr_t start, paddr_t end, paddr_t next)
-{	
-	// at first we'll just bump-allocate -
-	//    initially all page tables will be long-lived
-	//    (i.e. kernel, device mmio)
-	pt_start = start;
-	pt_end = end;
-	pt_next = next;
-}
+#define MMU_KERNEL_BASE ((mmu_table_t *)(__config.pt_start))
 
-u64 mmu_map(mmu_table_t *base, struct mmu_mapping *m);
-
-static paddr_t mmu_table_alloc(mmu_table_t *base)
+static inline paddr_t table_alloc(const mmu_table_t *base)
 {
 	paddr_t pt = 0;
 
 	// @TODO - if pt_next = _pt_end, or base != kernel,
 	//    provide new allocator
-	if (base == MMU_TABLE_KERNEL
-		&& pt_next < (paddr_t)pt_end
+	if (base == MMU_KERNEL_BASE
+		&& (paddr_t)__config.pt_next < __config.pt_end
 	)
-		pt = pt_next++;
+		pt = (paddr_t)(__config.pt_next++);
 
 	return pt;
+}
+
+static inline mmu_table_t *table_ptr(paddr_t pt)
+{
+	return (mmu_table_t *)(pt + __config.k_offset);
 }
 
 static inline int pte_row(vaddr_t va, int stage)
@@ -86,12 +85,8 @@ static inline u64 pte_block(paddr_t pa, struct mmu_mapping *m)
 		MMU_PAGE_VALID |
 		MMU_PAGE_AF;
 
-	return mask_set_bits_64(pa|block_attr, m->attr_indx, ~MMU_PAGE_AttrIndx, 8);
-}
-
-static inline paddr_t pte_get(mmu_table_t *table, vaddr_t va, int stage)
-{
-	return table->pte[pte_row(va, stage)] & MMU_TABLE_NLTA_4KB;
+	return mask_set_bits_64(pa|block_attr, m->attr_indx, 
+			 ~MMU_PAGE_AttrIndx, 8);
 }
 
 static inline void pte_insert(mmu_table_t *base, u64 pte, vaddr_t va, int stage)
@@ -102,25 +97,33 @@ static inline void pte_insert(mmu_table_t *base, u64 pte, vaddr_t va, int stage)
 		MMU_TABLE_AF;
 
 	mmu_table_t *table = base;
-	paddr_t next;
-	int i, r;
+	u64 next;
+	int r;
 
-	for (i = 0; i < stage; i++) {
+	for (int i = 0; i < stage; i++) {
 		r = pte_row(va, i);
 		next = table->pte[pte_row(va, stage)];
 
 		if (!next) {
-			next = mmu_table_alloc(base) | table_attr;
+			next = table_alloc(base) | table_attr;
 			table->pte[r] = next;
 		}
 
-		table = (mmu_table_t *)(next & MMU_TABLE_NLTA_4KB);
+		table = table_ptr(next & MMU_TABLE_NLTA_4KB);
 	}
 
 	table->pte[pte_row(va, stage)] = pte; 
 }
 
-u64 mmu_map(mmu_table_t *base, struct mmu_mapping *m)
+void __init_mmu(const struct mmu_config *c)
+{	
+	// at first we'll just bump-allocate -
+	//    initially all page tables will be long-lived
+	//    (i.e. kernel, device mmio)
+	__config = *c;
+}
+
+u64 mmu_map(struct mmu_mapping *m, mmu_table_t *base)
 {
 	// @TODO - this is an incredibly naive implementation:
 	//    - need to consider how to track pages associated to bases
@@ -132,12 +135,22 @@ u64 mmu_map(mmu_table_t *base, struct mmu_mapping *m)
 	u64 pte, pa, va, mapped = 0;
 	int stage;
 
+	if (base == 0)
+		base = MMU_KERNEL_BASE; 
+
+	// @TODO - probably have a 'resolve_va' function here
+	// where va == 0 => dynamic page allocation
+	if (m->va == VA_END) {
+		va_end_free = ALIGN(va_end_free - m->size, SIZE_PAGE);
+		m->va = va_end_free;
+	}
+
 	// enforces page-alignment, returns actual size
 	m->pa = ALIGN_FWD(m->pa, SIZE_PAGE);
 	m->va = ALIGN_FWD(m->va, SIZE_PAGE);
 	m->size = ALIGN_FWD(m->size, SIZE_PAGE);
 
-	while (mapped < m->size - SIZE_BLOCK) {
+	while (mapped + SIZE_BLOCK < m->size) {
 		pte = pte_block(m->pa + mapped, m);
 		pte_insert(base, pte, m->va + mapped, 2);
 		mapped += SIZE_BLOCK;
@@ -145,7 +158,7 @@ u64 mmu_map(mmu_table_t *base, struct mmu_mapping *m)
 
 	while (mapped < m->size) {
 		pte = pte_page(m->pa + mapped, m);
-		pte_insert(base, pte, m->va + mapped, 2);
+		pte_insert(base, pte, m->va + mapped, 3);
 		mapped += SIZE_PAGE;
 	}
 
