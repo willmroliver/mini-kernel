@@ -1,5 +1,5 @@
-#ifndef INC_UART_H
-#define INC_UART_H
+#ifndef INC_DRIVERS_ARM_UART_H
+#define INC_DRIVERS_ARM_UART_H
 
 #include <core/types.h>
 #include <lib/devicetree/dt.h>

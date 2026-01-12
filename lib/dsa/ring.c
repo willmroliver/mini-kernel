@@ -1,16 +1,14 @@
 #include "ring.h"
 #include <core/mem.h>
 
-
-
 struct ring *ring_alloc(u32 size)
 {
 	// size must be a power of 2
-	if (~(size - 1))
+	if (size & (size - 1))
 		return 0;
 		
 	struct ring *ring = kmalloc(sizeof(struct ring) + size);
-	ring->buf = (void *)(ring) + sizeof(struct ring);
+	ring->buf = (u8 *)(ring) + sizeof(struct ring);
 	ring->size = size;
 	ring->mask = size - 1;
 	ring->start = 0;
@@ -39,7 +37,7 @@ int ring_pop(struct ring *ring, u8 *byte)
 	if (ring->end == ring->start)
 		return 0;
 
-	ring->buf[ring->start & ring->mask] = *byte;
+	*byte = ring->buf[ring->start & ring->mask];
 	ring->start++;
 	return 1;
 }

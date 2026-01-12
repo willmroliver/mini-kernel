@@ -2,9 +2,11 @@ target_sources(${CORE_LIB}
   PUBLIC FILE_SET HEADERS
     BASE_DIRS ${CMAKE_SOURCE_DIR}
     FILES
-      uart-pl011.h
+      arm/gic.h
+      arm/uart-pl011.h
   PRIVATE
-    uart-pl011.c
+    arm/gic.c
+    arm/uart-pl011.c
 )
 
 target_include_directories(${CORE_LIB} 
