@@ -24,7 +24,7 @@ void ring_free(struct ring *ring)
 
 int ring_push(struct ring *ring, u8 byte)
 {
-	if (ring->end - ring->start == ring->size)
+	if ((ring->end - ring->start) == ring->size)
 		return 0;
 	
 	ring->buf[ring->end & ring->mask] = byte;
@@ -40,4 +40,29 @@ int ring_pop(struct ring *ring, u8 *byte)
 	*byte = ring->buf[ring->start & ring->mask];
 	ring->start++;
 	return 1;
+}
+
+int ring_full(struct ring *ring)
+{
+	return (ring->end - ring->start == ring->size);
+}
+
+int ring_empty(struct ring *ring)
+{
+	return ring->start == ring->end;
+}
+
+u32 ring_size(struct ring *ring)
+{
+	return ring->end - ring->start;
+}
+
+u8 ring_front(struct ring *ring)
+{
+	return ring->buf[ring->start & ring->mask];
+}
+
+u8 ring_back(struct ring *ring)
+{
+	return ring->buf[(ring->end - 1) & ring->mask];
 }

@@ -77,10 +77,8 @@ struct gic {
 
 struct gic *gic_driver_init(paddr_t d_reg, paddr_t c_reg);
 
-void gic_interrupt_init(struct gic *gic, u32 id, u32 priority);
+struct gic *gic_devicetree_init(struct fdt_node *dt);
 
-struct gic *gic_v2_devicetree_init(struct fdt_node *dt);
-
-u32 gic_v2_devicetree_intid(struct fdt_node *node);
+u32 gic_devicetree_intid(struct fdt_node *node);
 
 #endif

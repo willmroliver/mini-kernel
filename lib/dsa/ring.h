@@ -17,4 +17,16 @@ void ring_free(struct ring *ring);
 
 int ring_push(struct ring *ring, u8 byte);
 
+int ring_pop(struct ring *ring, u8 *byte);
+
+int ring_full(struct ring *ring);
+
+int ring_empty(struct ring *ring);
+
+u32 ring_size(struct ring *ring);
+
+u8 ring_front(struct ring *ring);
+
+u8 ring_back(struct ring *ring);
+
 #endif

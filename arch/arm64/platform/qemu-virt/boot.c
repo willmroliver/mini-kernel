@@ -12,9 +12,25 @@ extern void *_sheap, *_eheap;
 
 void __uart_irq_handler(void *arg)
 {
+	char c, d;
 	struct uart *uart = arg;
-	while (!uart_flags_rx_empty(uart))
-		uart_putc(uart, uart_getc(uart));
+
+	while (!uart_flags_rx_empty(uart)) {
+		ring_push(uart->buf, uart_getc(uart));
+		if ((c = ring_back(uart->buf)) == '\r')
+			break;
+	}
+
+	if (c != '\r')
+		return;
+
+	ring_pop(uart->buf, (u8*)&c);
+	while (ring_pop(uart->buf, (u8*)&d)) {
+		uart_putc(uart, c);
+		c = d;
+	}
+
+	uart_putc(uart, '\n');
 }
 
 void __boot_main(void *fdt, struct mmu_config *c) 
@@ -33,8 +49,8 @@ void __boot_main(void *fdt, struct mmu_config *c)
 
 	dt = fdt_parse(fdt, 0);
 
-	gic = gic_v2_devicetree_init(dt);
-	uart = uart_pl011_devicetree_init(dt);
+	gic = gic_devicetree_init(dt);
+	uart = uart_pl011_devicetree_init(dt, gic);
 
 	__arm_gic_global_set((struct gic_ix *)gic);
 
@@ -42,8 +58,7 @@ void __boot_main(void *fdt, struct mmu_config *c)
 	handler.arg = uart;
 
 	// @TODO - get SPI ID from prop_desc
-	gic_interrupt_init(gic, 33, 0);
-	gic_handler_set(&handler, 33);
+	gic_interrupt_enable(&(gic->ix), &handler, uart->intid);
 
 	uart_init(uart, 1);
 

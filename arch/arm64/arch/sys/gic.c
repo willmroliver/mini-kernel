@@ -47,4 +47,8 @@ void gic_handler_set(struct gic_handler *h, u32 intid)
 	gic_jmp[intid] = *h;
 }
 
-
+void gic_interrupt_enable(struct gic_ix *ix, struct gic_handler *h, u32 intid)
+{
+	ix->enable(ix, intid);
+	gic_handler_set(h, intid);
+}

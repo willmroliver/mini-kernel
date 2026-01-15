@@ -4,8 +4,12 @@
 #include <core/types.h>
 #include <lib/devicetree/dt.h>
 #include <lib/dsa/ring.h>
+#include <drivers/arm/gic-v2.h>
 
-#define DEFAULT_BAUD_RATE 230400
+#define UART_DEFAULT_BAUD_RATE 230400
+
+static const u32 UART_MIS_RX = 1 << 4;
+static const u32 UART_MIS_TX = 1 << 5;
 
 struct uart_regs {
 	volatile u32 DR;	    // 0x0 
@@ -29,6 +33,7 @@ struct uart_regs {
 struct uart {
 	struct uart_regs *regs;
 	struct ring *buf;
+	u32 intid;
 };
 
 struct uart *uart_driver_init(paddr_t reg, 
@@ -75,6 +80,6 @@ char uart_getc(const struct uart *);
 
 void uart_putc(struct uart *, char);
 
-struct uart *uart_pl011_devicetree_init(struct fdt_node *dt);
+struct uart *uart_pl011_devicetree_init(struct fdt_node *dt, struct gic *gic);
 
 #endif

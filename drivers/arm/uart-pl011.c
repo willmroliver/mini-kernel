@@ -1,4 +1,5 @@
 #include "uart-pl011.h"
+#include "arm/gic-v2.h"
 #include <lib/devicetree/dt.h>
 #include <sys/mmu.h>
 #include <core/mem.h>
@@ -134,7 +135,7 @@ void uart_init(struct uart *uart, int fifo)
 	uart_fifo_enable(uart, 0);
 
 	uart->regs->CR = ctrl | tx_rx_mask;
-	uart->regs->IMSC |= 0xff;
+	uart->regs->IMSC |= BIT(4); // RXIM
 
 	if (fifo)
 		uart_fifo_enable(uart, 1);
@@ -182,10 +183,11 @@ static int __dt_uart_tst(struct fdt_node *node, void *arg)
 	return 0;
 }
 
-struct uart *uart_pl011_devicetree_init(struct fdt_node *dt)
+struct uart *uart_pl011_devicetree_init(struct fdt_node *dt, struct gic *gic)
 {
 	struct mmu_mapping mem;
 	struct fdt_node *node = 0;
+	struct uart *uart;
 
 	dt_traverse(dt, __dt_uart_tst, &node);
 
@@ -200,5 +202,10 @@ struct uart *uart_pl011_devicetree_init(struct fdt_node *dt)
 	mmu_map(&mem, 0);
 
 	// @TODO - dynamically determine clk_hz from node `clocks` phandle
-	return uart_driver_init(mem.va, 0x16e3600, DEFAULT_BAUD_RATE, 0x100);
+	uart = uart_driver_init(mem.va, 0x16e3600, 
+			 UART_DEFAULT_BAUD_RATE, 0x100);
+
+	uart->intid = gic_devicetree_intid(node);
+
+	return uart;
 }

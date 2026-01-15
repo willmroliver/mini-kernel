@@ -94,13 +94,11 @@ void __kernel_sync_handler(struct sys_frame *frame)
 	}
 }
 
-extern void sys_reg_isb_orr_CPACR_EL1(u64 bits);
-
 static void __sve_simd_fp_handler(struct sys_frame *frame, size_t iss)
 {
 	switch (iss & ISS_SVE_SIMD_FP_MASK) {
 	case ISS_SVE_SIMD_FP_FPEN_TRAP:
-		sys_reg_isb_orr_CPACR_EL1(CPACR_EL1_FPEN_K);
+		sys_reg_isb_orr_CPACR_EL1(SYS_REG_CPACR_EL1_FPEN_K);
 		return;
 	default:
 		return;

@@ -1,5 +1,6 @@
 #include <sys/mmu.h>
 #include <arch/sys/gic.h>
+#include <core/endian.h>
 #include "gic-v2.h"
 
 u32 __gic_ix_iar(struct gic_ix *ix)
@@ -14,6 +15,27 @@ volatile u32 *__gic_ix_eoir(struct gic_ix *ix)
 	return &gic->c->EOIR;
 }
 
+void __gic_ix_enable(struct gic_ix *ix, u32 intid)
+{
+	struct gic *gic = (struct gic *)ix;
+
+	u32 n = intid >> 5, mask = BIT(intid & BITS_32(4,0));
+	gic->d->IGROUPRn[n] &= ~mask;
+	gic->d->ISENABLERn[n] |= mask;
+
+	n = intid >> 2;
+	mask = range_set_bits_32(gic->d->ITARGETSRn[n], 1, 8*(intid&3), 8);
+	gic->d->ITARGETSRn[n] = mask;
+}
+
+void __gic_ix_disable(struct gic_ix *ix, u32 intid)
+{
+	    struct gic *gic = (struct gic *)ix;
+
+	    u32 n = intid >> 5, mask = BIT(intid & BITS_32(4,0));
+	    gic->d->ISENABLERn[n] &= ~mask;
+}
+
 u32 *gic_c_DIR(struct gic_c_regs *gicc)
 {
 	return (u32 *)gicc + 0x1000;
@@ -24,6 +46,9 @@ struct gic *gic_driver_init(vaddr_t d_reg, vaddr_t c_reg)
 	struct gic *gic = kmalloc(sizeof(struct gic));
 	gic->ix.IAR = __gic_ix_iar;
 	gic->ix.EOIR = __gic_ix_eoir;
+	gic->ix.enable = __gic_ix_enable;
+	gic->ix.disable = __gic_ix_disable;
+
 	gic->d = (struct gic_d_regs *)d_reg;
 	gic->c = (struct gic_c_regs *)c_reg;
 
@@ -42,18 +67,7 @@ struct gic *gic_driver_init(vaddr_t d_reg, vaddr_t c_reg)
 	return gic;
 }
 
-void gic_interrupt_init(struct gic *gic, u32 id, u32 priority)
-{
-	u32 n = id >> 5, mask = BIT(id & BITS_32(4,0));
-	gic->d->IGROUPRn[n] &= ~mask;
-	gic->d->ISENABLERn[n] |= mask;
-
-	n = id >> 2;
-	mask = range_set_bits_32(gic->d->ITARGETSRn[n], 1, 8*(id&3), 8);
-	gic->d->ITARGETSRn[n] = mask;
-}
-
-struct gic *gic_v2_devicetree_init(struct fdt_node *dt)
+struct gic *gic_devicetree_init(struct fdt_node *dt)
 {
 	// @TODO - generalise compatibility test,
 	//  support multiple compatible targets
@@ -88,13 +102,14 @@ struct gic *gic_v2_devicetree_init(struct fdt_node *dt)
 	return gic_driver_init(gicd, gicc); 
 }
 
-u32 gic_v2_devicetree_intid(struct fdt_node *node)
+u32 gic_devicetree_intid(struct fdt_node *node)
 {
 	struct fdt_prop_desc *irq = dt_prop(node, FDT_PROP_INTERRUPTS);
 	if (irq == 0)
 		return 0;
 
 	u32 *vals = irq->data;
+	vals[1] = reverse_endian_u32(vals[1]);
 
 	switch (vals[0]) {
 	case GIC_FDT_IRQ_TYPE_PPI:

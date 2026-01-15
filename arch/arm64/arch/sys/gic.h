@@ -11,7 +11,9 @@ struct gic_handler {
 struct gic_ix {
 	u32 (*IAR)(struct gic_ix *ix);
 	volatile u32 *(*EOIR)(struct gic_ix *ix);
-	void (*handle)(struct gic_ix *ix); // set by __arm_gic_global_set
+	void (*enable)(struct gic_ix *ix, u32 intid);
+	void (*disable)(struct gic_ix *ix, u32 intid);
+	void (*handle)(struct gic_ix *ix);  // set by __arm_gic_global_set
 	void (*done)(struct gic_ix *ix);    // set by __arm_gic_global_set
 };
 
@@ -20,5 +22,7 @@ void __arm_gic_global_set(struct gic_ix *ix);
 struct gic_ix *__arm_gic_global_get();
 
 void gic_handler_set(struct gic_handler *h, u32 intid);
+
+void gic_interrupt_enable(struct gic_ix *gic, struct gic_handler *h, u32 id); 
 
 #endif
