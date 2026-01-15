@@ -4,18 +4,18 @@
 #include <core/types.h>
 
 struct mem_ix {
-	void *(*alloc)(void *mem, size_t size);
-	void (*free)(void *mem, void *data);	
+	void *(*alloc)(struct mem_ix *ix, size_t size);
+	void (*free)(struct mem_ix *ix, void *data);	
 };
 
-static inline void *__mem_alloc(struct mem_ix *mem, size_t size)
+static inline void *__mem_alloc(struct mem_ix *ix, size_t size)
 {
-	return mem->alloc(mem, size);
+	return ix->alloc(ix, size);
 }
 
-static inline void __mem_free(struct mem_ix *mem, void *data)
+static inline void __mem_free(struct mem_ix *ix, void *data)
 {
-	return mem->free(mem, data);
+	return ix->free(ix, data);
 }
 
 // --- Interface Implementations ---
@@ -25,6 +25,6 @@ struct mem_bump {
 	vaddr_t addr;
 };
 
-void mem_bump_init(struct mem_bump* mem, vaddr_t addr);
+void mem_bump_init(struct mem_bump* ix, vaddr_t addr);
 
 #endif

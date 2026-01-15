@@ -3,6 +3,7 @@ target_sources(${CORE_LIB}
     exception.c
     exception.S
     frame.S
+    gic.c
     mmu.c
     reg.S
 )

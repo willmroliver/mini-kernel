@@ -2,10 +2,10 @@ target_sources(${CORE_LIB}
   PUBLIC FILE_SET HEADERS
     BASE_DIRS ${CMAKE_SOURCE_DIR}
     FILES
-      arm/gic.h
+      arm/gic-v2.h
       arm/uart-pl011.h
   PRIVATE
-    arm/gic.c
+    arm/gic-v2.c
     arm/uart-pl011.c
 )
 

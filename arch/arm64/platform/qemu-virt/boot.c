@@ -1,17 +1,28 @@
+#include "drivers/arm/gic-v2.h"
 #include <core/types.h>
 #include <core/endian.h>
 #include <core/mem.h>
+#include <drivers/arm/uart-pl011.h>
 #include <lib/devicetree/dt.h>
-#include <lib/devicetree/init.h>
-#include <sys/sys.h>
+#include <arch/sys/gic.h>
 #include <sys/mmu.h>
+#include <sys/sys.h>
 
 extern void *_sheap, *_eheap;
 
+void __uart_irq_handler(void *arg)
+{
+	struct uart *uart = arg;
+	while (!uart_flags_rx_empty(uart))
+		uart_putc(uart, uart_getc(uart));
+}
+
 void __boot_main(void *fdt, struct mmu_config *c) 
 {
+	struct gic_handler handler;
 	struct mem_bump mem;
 	struct fdt_node *dt;
+	struct gic *gic;
 	struct uart *uart;
 
 	__init_exception_handlers(0);
@@ -21,10 +32,21 @@ void __boot_main(void *fdt, struct mmu_config *c)
 	__mem_global_set((struct mem_ix *)&mem);
 
 	dt = fdt_parse(fdt, 0);
-	uart = dt_init_uart_pl011(dt);
+
+	gic = gic_v2_devicetree_init(dt);
+	uart = uart_pl011_devicetree_init(dt);
+
+	__arm_gic_global_set((struct gic_ix *)gic);
+
+	handler.fn = __uart_irq_handler;
+	handler.arg = uart;
+
+	// @TODO - get SPI ID from prop_desc
+	gic_interrupt_init(gic, 33, 0);
+	gic_handler_set(&handler, 33);
+
 	uart_init(uart, 1);
 
-	for (;;)
-		uart_putc(uart, uart_getc(uart));
+	for (;;);
 }
 

@@ -11,10 +11,15 @@ __arch_init_exception_handlers:
 
 __sync_elx:
 	SYS_FRAME_PUSH 1
-
 	bl arch_sys_frame_init
 	bl __kernel_sync_handler
+	SYS_FRAME_POP 1
+	eret
 
+__irq_elx:
+	SYS_FRAME_PUSH 1
+	bl arch_sys_frame_init
+	bl __kernel_irq_handler
 	SYS_FRAME_POP 1
 	eret
 
@@ -27,17 +32,17 @@ __stub_except:
 vector_table:
 	b __stub_except // Synchronous from EL0
 	.balign 0x80
-	b __stub_except // IRQ/vIRQ from EL0
+	b __stub_except // IRQ-vIRQ from EL0
 	.balign 0x80
-	b __stub_except // FIQ/vFIQ from EL0
+	b __stub_except // FIQ-vFIQ from EL0
 	.balign 0x80
-	b __stub_except	// SError/VSError from EL0
+	b __stub_except	// SError-VSError from EL0
 	.balign 0x80
 	b __sync_elx	// Synchronous from EL1-3
 	.balign 0x80
-	b __stub_except // IRQ/..
+	b __irq_elx	// IRQ..
 	.balign 0x80
-	b __stub_except // FIQ/..
+	b __stub_except // FIQ..
 	.balign 0x80
-	b __stub_except // SError/..
+	b __stub_except // SError..
 	.balign 0x80

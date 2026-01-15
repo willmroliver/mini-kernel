@@ -73,8 +73,8 @@ static inline u64 pte_page(paddr_t pa, struct mmu_mapping *m)
 		MMU_PAGE_DESCRIPTOR |
 		MMU_PAGE_AF;
 
-	return mask_set_bits_64(pa|page_attr, m->attr_indx, 
-			 ~MMU_PAGE_AttrIndx, 8);
+	return mask_set_bits_64(pa|page_attr, m->attr_indx,
+			MMU_PAGE_AttrIndx, 2);
 }
 
 static inline u64 pte_block(paddr_t pa, struct mmu_mapping *m)
@@ -84,7 +84,7 @@ static inline u64 pte_block(paddr_t pa, struct mmu_mapping *m)
 		MMU_PAGE_AF;
 
 	return mask_set_bits_64(pa|block_attr, m->attr_indx, 
-			 ~MMU_PAGE_AttrIndx, 8);
+			 MMU_PAGE_AttrIndx, 2);
 }
 
 static inline void pte_insert(mmu_table_t *base, u64 pte, vaddr_t va, int stage)
@@ -100,7 +100,7 @@ static inline void pte_insert(mmu_table_t *base, u64 pte, vaddr_t va, int stage)
 
 	for (int i = 0; i < stage; i++) {
 		r = pte_row(va, i);
-		next = table->pte[pte_row(va, stage)];
+		next = table->pte[r];
 
 		if (!next) {
 			next = table_alloc(base) | table_attr;
@@ -130,7 +130,7 @@ u64 mmu_map(struct mmu_mapping *m, mmu_table_t *base)
 	//
 	// `struct mmu_mapping` might be a useful focal point
 	//    for tracking & storing
-	u64 pte, pa, va, mapped = 0;
+	u64 pte, mapped = 0;
 	int stage;
 
 	if (base == 0)

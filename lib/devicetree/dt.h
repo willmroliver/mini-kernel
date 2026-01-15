@@ -15,10 +15,13 @@
 #define FDT_NOP        (0x04000000) // all NOP values can be ignored
 #define FDT_END        (0x09000000) // end of the structure block
 
-static const char *FDT_PROP_MODEL  = "model";
-static const char *FDT_PROP_REG    = "reg";
-static const char *FDT_PROP_ADDR_C = "#address-cells";
-static const char *FDT_PROP_SIZE_C = "#size-cells";
+static const char *FDT_PROP_MODEL          = "model";
+static const char *FDT_PROP_REG            = "reg";
+static const char *FDT_PROP_COMPATIBLE     = "compatible";
+static const char *FDT_PROP_INTERRUPTS     = "interrupts";
+static const char *FDT_PROP_INT_CONTROLLER = "interrupt-controller";
+static const char *FDT_PROP_ADDR_C         = "#address-cells";
+static const char *FDT_PROP_SIZE_C         = "#size-cells";
 
 struct fdt_header {
 	u32 magic;              // should always be 0xd00dfeed
@@ -97,5 +100,11 @@ void dt_traverse(struct fdt_node *node,
  * Retrieve a node prop by name
  */
 struct fdt_prop_desc *dt_prop(struct fdt_node *node, const char *name);
+
+/**
+ * Retrieve the interrupt nexus root node (primary interrupt controller)
+ */
+struct fdt_node *dt_interrupt_root(struct fdt_node *node);
+
 
 #endif

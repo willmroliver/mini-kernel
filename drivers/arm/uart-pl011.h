@@ -75,4 +75,6 @@ char uart_getc(const struct uart *);
 
 void uart_putc(struct uart *, char);
 
+struct uart *uart_pl011_devicetree_init(struct fdt_node *dt);
+
 #endif

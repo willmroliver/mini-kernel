@@ -50,6 +50,8 @@ _boot_enable_mmu:
 	ldr hold, =_sstack
 	mov sp, hold 
 
+	// enable IRQ exceptions
+	msr DAIFCLR, #2
 	ldr hold, =__boot_main
 	br hold 
 1:

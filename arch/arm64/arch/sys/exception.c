@@ -1,6 +1,7 @@
 #include <core/types.h>
 #include <sys/sys.h>
-#include <arch/sys/reg.h>
+#include "gic.h"
+#include "reg.h"
 
 // --- ESR_EL1 Exception Class [bits 31-26] ---
 #define ESR1_EC_MASK (0x3f << 26)
@@ -104,4 +105,11 @@ static void __sve_simd_fp_handler(struct sys_frame *frame, size_t iss)
 	default:
 		return;
 	}
+}
+
+void __kernel_irq_handler(struct sys_frame *frame)
+{
+	struct gic_ix *ix = __arm_gic_global_get();
+	ix->handle(ix);
+	ix->done(ix);
 }
