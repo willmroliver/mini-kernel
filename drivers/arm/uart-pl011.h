@@ -32,7 +32,7 @@ struct uart_regs {
  
 struct uart {
 	struct uart_regs *regs;
-	struct ring *buf;
+	struct ring8 *buf;
 	u32 intid;
 };
 

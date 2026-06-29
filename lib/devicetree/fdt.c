@@ -86,11 +86,11 @@ static u32 *fdt_node_parse(u32 *data,
 	for (; data[0] != FDT_END; data++) {
 		switch (data[0]) {
 		case FDT_BEGIN_NODE: 
-			data = fdt_node_parse(data, node->subnodes + n_sub, header);
+			data = fdt_node_parse(data, node->subnodes+n_sub, header);
 			n_sub++;
 			break;
 		case FDT_PROP:
-			data = fdt_prop_parse(data, node->props + n_prop, header);
+			data = fdt_prop_parse(data, node->props+n_prop, header);
 			n_prop++;
 			break;
 		case FDT_END_NODE:
@@ -123,7 +123,7 @@ static inline void fdt_reg_evaluate(struct fdt_node *node, u32 addr_c, u32 size_
 		if (strcmp(FDT_PROP_REG, name) == 0)
 			prop = node->props + i;
 		else if (strcmp(FDT_PROP_ADDR_C, name) == 0)
-			naddr_c = reverse_endian_u32(*(u32 *)(node->props[i].data));  
+			naddr_c = reverse_endian_u32(*(u32 *)(node->props[i].data));
 		else if (strcmp(FDT_PROP_SIZE_C, name) == 0)
 			nsize_c = reverse_endian_u32(*(u32 *)(node->props[i].data));
 	}

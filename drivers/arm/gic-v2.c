@@ -58,7 +58,7 @@ struct gic *gic_driver_init(vaddr_t d_reg, vaddr_t c_reg)
 	// -- [7:4] Group Priority, [3:0] Sub Priority
 	gic->c->BPR = 3;
 
-	// -- No interrupts will masked by default
+	// -- No interrupts will be masked by default
 	gic->c->PMR = -1;
 
 	if ((gic->d->TYPER & GICD_TYPER_SecurityExtn) == 0)

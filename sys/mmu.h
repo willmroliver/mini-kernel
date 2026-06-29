@@ -4,6 +4,14 @@
 #include <arch/sys/mmu.h>
 #include <core/types.h>
 
+#ifndef MMU_PAGE_SIZE
+#error "MMU_PAGE_SIZE not defined by arch/sys/mmu.h"
+#endif
+
+#ifndef MMU_BLOCK_SIZE
+#errir "MMU_BLOCK_SIZE not defined by arch/sys/mmu.h"
+#endif
+
 struct mmu_config {
 	vaddr_t k_offset;
 	paddr_t pt_start;

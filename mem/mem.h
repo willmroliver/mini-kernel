@@ -2,6 +2,7 @@
 #define INC_MEM_MEM_H
 
 #include <core/types.h>
+#include <lib/dsa/ring.h>
 
 struct mem_ix {
 	void *(*alloc)(struct mem_ix *ix, size_t size);
@@ -22,9 +23,19 @@ static inline void __mem_free(struct mem_ix *ix, void *data)
 
 struct mem_bump {
 	struct mem_ix ix;
-	vaddr_t addr;
+	addr_t addr;
 };
 
-void mem_bump_init(struct mem_bump* ix, vaddr_t addr);
+void mem_bump_init(struct mem_bump* ix);
+
+struct mem_buddy {
+	struct mem_ix ix;
+	addr_t addr;
+	size_t size;
+	struct list *lists;
+	u8     *xor;
+};
+
+void mem_buddy_init(struct mem_buddy *ix);
 
 #endif

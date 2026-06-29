@@ -7,4 +7,6 @@ size_t strlen(const char *s);
 
 int strcmp(const char *s0, const char *s1);
 
+int strncmp(const char *s0, const char *s1, size_t n);
+
 #endif

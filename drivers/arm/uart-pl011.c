@@ -10,7 +10,7 @@ struct uart *uart_driver_init(vaddr_t reg,
 			      int buf_len)
 {
 	struct uart *uart = kmalloc(sizeof(struct uart));
-	uart->buf = ring_alloc(buf_len);
+	uart->buf = ring8_alloc(buf_len);
 	uart->regs = (struct uart_regs *)reg;
 
 	uart_baud_init(uart, clk_hz, baud_rate);

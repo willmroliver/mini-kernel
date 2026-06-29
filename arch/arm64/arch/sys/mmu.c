@@ -31,8 +31,8 @@ static const u64 MMU_PAGE_AttrIndx         = BITS_64(4,2);
 static const u64 MMU_PAGE_DESCRIPTOR       = BIT(1); 
 static const u64 MMU_PAGE_VALID            = BIT(0);
 
-static const u64 SIZE_PAGE                 = 0x1000;
-static const u64 SIZE_BLOCK                = 0x200000;
+static const u64 SIZE_PAGE                 = MMU_PAGE_SIZE;
+static const u64 SIZE_BLOCK                = MMU_BLOCK_SIZE;
 
 static const u64 VA_END         = -1;
 

@@ -13,6 +13,7 @@ typedef signed long arch_i64;
 
 typedef unsigned long arch_size_t;
 typedef unsigned long arch_ptr_t;
+typedef unsigned long arch_addr_t;
 typedef unsigned long arch_paddr_t;
 typedef unsigned long arch_vaddr_t;
 typedef unsigned long arch_off_t;

@@ -19,6 +19,22 @@ struct fdt_prop_desc *dt_prop(struct fdt_node *node, const char *name)
 	return 0;
 }
 
+struct fdt_node *dt_node(struct fdt_node *dt, const char *name)
+{
+	struct fdt_node *s;
+	size_t n = strlen(name) - 1;
+
+	for (int i = 0; i < dt->n_sub; i++) {
+		s = dt->subnodes + i;
+		if (strncmp(s->name, name, n) != 0)
+			continue;	
+		if (s->name[n] == '@' || s->name[n] == '\0')
+			return s;
+	}
+
+	return 0;
+}
+
 struct fdt_node *dt_interrupt_root(struct fdt_node *node)
 {
 	struct fdt_prop_desc 
@@ -33,5 +49,12 @@ struct fdt_node *dt_interrupt_root(struct fdt_node *node)
 		if ((root = dt_interrupt_root(node->subnodes + i)))
 			return root;
 	
+	return 0;
+}
+
+struct fdt_reg *dt_memory(struct fdt_node *node)
+{
+	if ((node = dt_node(node, FDT_NODE_MEMORY)))
+		return node->reg;
 	return 0;
 }

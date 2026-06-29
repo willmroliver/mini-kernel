@@ -16,21 +16,26 @@ void __uart_irq_handler(void *arg)
 	struct uart *uart = arg;
 
 	while (!uart_flags_rx_empty(uart)) {
-		ring_push(uart->buf, uart_getc(uart));
-		if ((c = ring_back(uart->buf)) == '\r')
+		ring8_push(uart->buf, uart_getc(uart));
+		if ((c = ring8_back(uart->buf)) == '\r')
 			break;
 	}
 
 	if (c != '\r')
 		return;
 
-	ring_pop(uart->buf, (u8*)&c);
-	while (ring_pop(uart->buf, (u8*)&d)) {
+	ring8_pop(uart->buf, (u8*)&c);
+	while (ring8_pop(uart->buf, (u8*)&d)) {
 		uart_putc(uart, c);
 		c = d;
 	}
 
 	uart_putc(uart, '\n');
+}
+
+void mem_devicetree_init(struct fdt_node *dt)
+{
+	struct fdt_reg *reg = dt_memory(dt);
 }
 
 void __boot_main(void *fdt, struct mmu_config *c) 
@@ -44,7 +49,8 @@ void __boot_main(void *fdt, struct mmu_config *c)
 	__init_exception_handlers(0);
 	__init_mmu(c);
 
-	mem_bump_init(&mem, (vaddr_t)&_sheap);
+	mem.addr = (vaddr_t)&_sheap;
+	mem_bump_init(&mem);
 	__mem_global_set((struct mem_ix *)&mem);
 
 	dt = fdt_parse(fdt, 0);
@@ -57,7 +63,6 @@ void __boot_main(void *fdt, struct mmu_config *c)
 	handler.fn = __uart_irq_handler;
 	handler.arg = uart;
 
-	// @TODO - get SPI ID from prop_desc
 	gic_interrupt_enable(&(gic->ix), &handler, uart->intid);
 
 	uart_init(uart, 1);
